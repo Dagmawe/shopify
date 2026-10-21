@@ -1,6 +1,7 @@
-import type { ActionFunctionArgs } from "@remix-run/node";
+import type { ActionFunctionArgs } from "react-router";
 import { authenticate } from "../shopify.server";
 import db from "../db.server";
+import { clearPlanCache } from "../lib/context.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const { shop, session, topic } = await authenticate.webhook(request);
@@ -13,5 +14,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     await db.session.deleteMany({ where: { shop } });
   }
 
+  clearPlanCache(shop);
+  // Distributors and orders are kept for 48 hours in case the store
+  // reinstalls; Shopify then sends shop/redact and we delete them.
   return new Response();
 };

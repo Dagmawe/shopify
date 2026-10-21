@@ -5,52 +5,115 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// Note that some adapters may set a maximum length for the String type by default, please ensure your strings are long
+// enough when changing adapters.
+// See https://www.prisma.io/docs/orm/reference/prisma-schema-reference#string for more information
 datasource db {
   provider = "sqlite"
   url      = "file:dev.sqlite"
 }
 
 model Session {
-  id                  String    @id
-  shop                String
-  state               String
-  isOnline            Boolean   @default(false)
-  scope               String?
-  expires             DateTime?
-  accessToken         String
-  userId              BigInt?
-  firstName           String?
-  lastName            String?
-  email               String?
-  accountOwner        Boolean   @default(false)
-  locale              String?
-  collaborator        Boolean?  @default(false)
-  emailVerified       Boolean?  @default(false)
+  id            String    @id
+  shop          String
+  state         String
+  isOnline      Boolean   @default(false)
+  scope         String?
+  expires       DateTime?
+  accessToken   String
+  userId        BigInt?
+  firstName     String?
+  lastName      String?
+  email         String?
+  accountOwner  Boolean   @default(false)
+  locale        String?
+  collaborator  Boolean?  @default(false)
+  emailVerified Boolean?  @default(false)
   refreshToken        String?
   refreshTokenExpires DateTime?
 }
 
-model B2bValidationRule {
-  id                  String   @id @default(cuid())
-  shop                String
-  title               String
-  enabled             Boolean  @default(true)
-  // Audience targeting: "ALL" | "B2B_TAGGED" | "NON_B2B"
-  targetAudience      String   @default("B2B_TAGGED")
-  // Customer tag to check in Shopify Function (e.g. "B2B", "Wholesale")
-  customerTag         String   @default("B2B")
-  // Minimum Order Value in store currency (0 = disabled)
-  minOrderSubtotal    Float    @default(0)
-  // Minimum Total Units across the entire cart (0 = disabled)
-  minTotalQuantity    Int      @default(0)
-  // Per-SKU Case Pack Multiple (e.g., 6 means every line item quantity must be a multiple of 6; 1 = disabled)
-  casePackMultiple    Int      @default(1)
-  // Mix-and-Match Total Cart Case Multiple (e.g., 12 means total cart quantity must be divisible by 12; 1 = disabled)
-  mixMatchCaseMultiple Int     @default(1)
-  // Custom error message template shown at cart/checkout when blocked
-  customErrorPrefix   String   @default("Wholesale Order Requirement:")
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+// ---------------------------------------------------------------------------
+// CaseFlow models. Every row is scoped to a shop so one database can serve
+// many stores safely.
+// ---------------------------------------------------------------------------
+
+// A wholesaler or distributor the store buys from.
+model Distributor {
+  id            Int             @id @default(autoincrement())
+  shop          String
+  name          String
+  repName       String?
+  email         String?
+  phone         String?
+  leadTimeDays  Int             @default(7)
+  minOrderCases Int             @default(0)
+  notes         String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  products      ProductSetting[]
+  purchaseOrders PurchaseOrder[]
 
   @@index([shop])
+}
+
+// Case-pack and reorder settings for one Shopify product variant.
+// Shopify tracks stock in single units (bottles); these settings let the
+// store order and receive in cases.
+model ProductSetting {
+  id              Int          @id @default(autoincrement())
+  shop            String
+  variantId       String
+  inventoryItemId String
+  title           String
+  sku             String?
+  caseSize        Int          @default(12)
+  costPerCase     Float?
+  reorderPoint    Int          @default(0)
+  parLevel        Int          @default(0)
+  distributorId   Int?
+  distributor     Distributor? @relation(fields: [distributorId], references: [id], onDelete: SetNull)
+  updatedAt       DateTime     @updatedAt
+
+  @@unique([shop, variantId])
+  @@index([shop])
+}
+
+model PurchaseOrder {
+  id            Int                 @id @default(autoincrement())
+  shop          String
+  number        Int
+  distributorId Int
+  distributor   Distributor         @relation(fields: [distributorId], references: [id], onDelete: Restrict)
+  // DRAFT -> ORDERED -> PARTIAL -> RECEIVED, or CANCELLED
+  status        String              @default("DRAFT")
+  locationId    String?
+  locationName  String?
+  notes         String?
+  expectedAt    DateTime?
+  orderedAt     DateTime?
+  receivedAt    DateTime?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  lines         PurchaseOrderLine[]
+
+  @@unique([shop, number])
+  @@index([shop, status])
+}
+
+model PurchaseOrderLine {
+  id              Int           @id @default(autoincrement())
+  purchaseOrderId Int
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  variantId       String
+  inventoryItemId String
+  title           String
+  sku             String?
+  caseSize        Int
+  casesOrdered    Int           @default(0)
+  looseOrdered    Int           @default(0)
+  costPerCase     Float?
+  unitsReceived   Int           @default(0)
+
+  @@index([purchaseOrderId])
 }

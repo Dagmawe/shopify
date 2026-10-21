@@ -1,6 +1,5 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
-import { redirect } from "@remix-run/node";
-import { Form, useLoaderData } from "@remix-run/react";
+import type { LoaderFunctionArgs } from "react-router";
+import { redirect, Form, useLoaderData } from "react-router";
 
 import { login } from "../../shopify.server";
 
@@ -22,9 +21,9 @@ export default function App() {
   return (
     <div className={styles.index}>
       <div className={styles.content}>
-        <h1 className={styles.heading}>A short heading about [your app]</h1>
+        <h1 className={styles.heading}>Order by the case. Sell by the bottle.</h1>
         <p className={styles.text}>
-          A tagline about [your app] that describes your value proposition.
+          CaseFlow is purchase ordering and receiving for wine and liquor stores on Shopify.
         </p>
         {showForm && (
           <Form className={styles.form} method="post" action="/auth/login">
@@ -40,16 +39,16 @@ export default function App() {
         )}
         <ul className={styles.list}>
           <li>
-            <strong>Product feature</strong>. Some detail about your feature and
-            its benefit to your customer.
+            <strong>Case-pack purchasing</strong>. Order from distributors in
+            cases; CaseFlow converts to bottles for your Shopify stock.
           </li>
           <li>
-            <strong>Product feature</strong>. Some detail about your feature and
-            its benefit to your customer.
+            <strong>Fast receiving</strong>. Count what arrived, click once,
+            and your stock is updated.
           </li>
           <li>
-            <strong>Product feature</strong>. Some detail about your feature and
-            its benefit to your customer.
+            <strong>Reorder alerts</strong>. See what's running low, grouped by
+            distributor, with suggested case quantities.
           </li>
         </ul>
       </div>

@@ -1,36 +1,64 @@
-# This file stores configurations for your Shopify B2B Order Minimums & Case-Pack Validator app.
-# Run `npm run config:link` to link this automatically to your Partner account (5246084).
-
-name = "b2b-order-validator"
+# This file stores configurations for your Shopify app.
+# Run `npm run config:link` once to connect this folder to your app in the
+# Shopify Dev Dashboard. That fills in client_id and the URLs below.
 client_id = ""
-application_url = "https://example.com"
-embedded = true
-
-[build]
-automatically_update_urls_on_dev = true
-dev_store_url = "dlegesse-store.myshopify.com"
+name = "CaseFlow"
 
 [access_scopes]
-# Scopes needed for B2B Cart & Checkout Validation Rules and Product/Customer Tag inspection
-scopes = "read_products,read_customers,read_validations,write_validations"
-
-[auth]
-redirect_urls = [
-  "https://example.com/auth/callback",
-  "https://example.com/auth/shopify/callback",
-  "https://example.com/api/auth/callback"
-]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_products,read_inventory,write_inventory,read_locations"
 
 [webhooks]
-api_version = "2025-01"
+api_version = "2026-10"
 
+  # Handled by: /app/routes/webhooks.app.uninstalled.tsx
   [[webhooks.subscriptions]]
   uri = "/webhooks/app/uninstalled"
   topics = ["app/uninstalled"]
 
+  # Handled by: /app/routes/webhooks.app.scopes_update.tsx
   [[webhooks.subscriptions]]
-  topics = ["app/scopes_update"]
+  topics = [ "app/scopes_update" ]
   uri = "/webhooks/app/scopes_update"
 
-[pos]
-embedded = false
+  # Mandatory compliance topics for App Store apps
+  # See: https://shopify.dev/docs/apps/build/privacy-law-compliance
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/customers/data_request"
+  compliance_topics = ["customers/data_request"]
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/customers/redact"
+  compliance_topics = ["customers/redact"]
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/shop/redact"
+  compliance_topics = ["shop/redact"]
+
+# Only receive Events when a variant's price changes and the product status is active.
+# See: https://shopify.dev/docs/apps/build/events-webhooks
+# [events]
+# api_version = "2026-10"
+
+#   [[events.subscription]]
+#   handle = "product-price-change"
+#   topic = "Product"
+#   actions = ["update"]
+#   triggers = ["product.variants.price", "product.variants.compareAtPrice"]
+#   uri = "/webhooks/products/update"
+#   query = """
+#   query product_variant_price_change($productId: ID!, $variantsId: ID!) {
+#     product(id: $productId) {
+#       id
+#       title
+#       status
+#     }
+#     productVariant(id: $variantsId) {
+#       id
+#       title
+#       price
+#       compareAtPrice
+#     }
+#   }
+#   """
+#   query_filter = "product.status:'ACTIVE'"
