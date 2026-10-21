@@ -1,0 +1,27 @@
+# Render Blueprint: Render > New > Blueprint > pick this repo.
+# Creates one always-on web service (Render's $7/month instance; the default
+# for new services) with a 1 GB persistent disk for the SQLite database.
+# A service with a disk runs as a single instance, which is fine at this size.
+services:
+  - type: web
+    name: corkcount
+    runtime: docker
+    region: ohio
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /healthz
+    autoDeployTrigger: commit
+    disk:
+      name: data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        value: file:/var/data/prod.sqlite
+      # Your production app's Client ID and secret (Render asks when you create
+      # the Blueprint). The app's address comes from Render automatically.
+      - key: SHOPIFY_API_KEY
+        sync: false
+      - key: SHOPIFY_API_SECRET
+        sync: false

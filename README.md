@@ -107,14 +107,19 @@ Corkcount uses Shopify **managed pricing**: Shopify shows the plan picker, runs 
 
 ## Launching on the Shopify App Store
 
-### Put the app on a server
+### Put the app on a server (Render)
 
-`npm run dev` only runs while your computer is on. For real merchants the app needs a server:
+`npm run dev` only runs while your computer is on. Live merchants use a separate **production app** hosted on [Render](https://render.com), about $7.25/month: a $7 always-on server plus a 1 GB disk that holds the SQLite database. `render.yaml` in this repo describes the whole setup.
 
-- Shopify's guide lists hosts that work well (Fly.io, Render, Railway, Google Cloud Run): [shopify.dev/docs/apps/launch/deployment](https://shopify.dev/docs/apps/launch/deployment). Expect roughly $5–25/month at the start.
-- **Switch the database to PostgreSQL** before launch. The included SQLite database is a single file, which is fine for testing but not for a live app. Most hosts offer a managed Postgres; change `provider = "sqlite"` to `"postgresql"` in `prisma/schema.prisma`, set `url = env("DATABASE_URL")`, delete the `prisma/migrations` folder, and run `npx prisma migrate dev --name init` once.
-- Set `NODE_ENV=production`, and make sure `CORKCOUNT_BILLING_BYPASS` is **not** set on the server.
-- Run `npm run deploy` to push your app configuration (scopes, webhooks) to Shopify.
+1. **Create the production app.** In the [Dev Dashboard](https://dev.shopify.com/dashboard), click **Create app** and name it `Corkcount`. Keep your existing dev app for `npm run dev`.
+2. **Link it locally.** In this folder run `npm run config:link`, choose the new **Corkcount** app, and name the config `production`. This creates `shopify.app.production.toml`.
+3. **Deploy on Render.** Sign up at render.com with GitHub, then **New → Blueprint** and pick this repo. When asked, paste the production app's **Client ID** (`SHOPIFY_API_KEY`) and **Client secret** (`SHOPIFY_API_SECRET`) from the Dev Dashboard → Corkcount → Settings. Wait for the deploy to show **Live**, then copy the service URL (for example `https://corkcount.onrender.com`).
+4. **Point Shopify at it.** In `shopify.app.production.toml` set `application_url` to that URL, set `redirect_urls = [ "<that URL>/auth/callback" ]`, and copy the `scopes` and `[[webhooks.subscriptions]]` blocks from `shopify.app.toml`. Then run `npm run deploy -- --config production`.
+5. **Switch back for development:** `npm run config:use` and pick `shopify.app.toml`.
+
+Every push to `main` redeploys automatically. The database file lives on the disk, so it survives redeploys. A service with a disk runs as one instance, which is plenty for hundreds of stores. Move to Postgres when you outgrow it.
+
+Never set `CORKCOUNT_BILLING_BYPASS` on Render: production must check plans.
 
 ### Submit for review
 
