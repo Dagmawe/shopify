@@ -2,7 +2,7 @@
 # Run `npm run config:link` once to connect this folder to your app in the
 # Shopify Dev Dashboard. That fills in client_id and the URLs below.
 client_id = ""
-name = "CaseFlow"
+name = "Corkcount"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes

@@ -15,7 +15,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   return null;
 };
 
-export const meta: MetaFunction = () => [{ title: "Open CaseFlow from Shopify" }];
+export const meta: MetaFunction = () => [{ title: "Open Corkcount from Shopify" }];
 
 export default function Auth() {
   return (
@@ -28,10 +28,10 @@ export default function Auth() {
         lineHeight: 1.5,
       }}
     >
-      <h1 style={{ fontSize: 24, marginBottom: 8 }}>Open CaseFlow from Shopify</h1>
+      <h1 style={{ fontSize: 24, marginBottom: 8 }}>Open Corkcount from Shopify</h1>
       <p>
-        CaseFlow runs inside your Shopify admin. Go to your Shopify admin, choose{" "}
-        <strong>Apps</strong>, then <strong>CaseFlow</strong>. If it isn&apos;t installed
+        Corkcount runs inside your Shopify admin. Go to your Shopify admin, choose{" "}
+        <strong>Apps</strong>, then <strong>Corkcount</strong>. If it isn&apos;t installed
         yet, install it from the Shopify App Store.
       </p>
     </main>

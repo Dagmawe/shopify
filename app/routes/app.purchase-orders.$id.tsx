@@ -199,7 +199,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       try {
         await addReceivedStock(admin, {
           locationId: order.locationId,
-          reference: `caseflow://purchase-order/${order.number}`,
+          reference: `corkcount://purchase-order/${order.number}`,
           changes: changes.map((d) => ({ inventoryItemId: d.line.inventoryItemId, delta: d.units })),
         });
       } catch (err) {
@@ -412,7 +412,7 @@ export default function PurchaseOrderDetail() {
             <s-stack direction="block" gap="base">
               {isOpen && (
                 <s-paragraph>
-                  Count what arrived and enter it below. CaseFlow converts cases to bottles and adds
+                  Count what arrived and enter it below. Corkcount converts cases to bottles and adds
                   them to your Shopify stock at {order.locationName}.
                 </s-paragraph>
               )}

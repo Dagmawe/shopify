@@ -75,10 +75,10 @@ export function logThrown(where: string, request: Request, thrown: unknown) {
   const path = new URL(request.url).pathname;
   if (thrown instanceof Response) {
     console.warn(
-      `[CaseFlow] ${where} ${path}: stopped with HTTP ${thrown.status}` +
+      `[Corkcount] ${where} ${path}: stopped with HTTP ${thrown.status}` +
         (thrown.headers.get("Location") ? ` -> ${thrown.headers.get("Location")}` : ""),
     );
   } else {
-    console.error(`[CaseFlow] ${where} ${path}: error`, thrown);
+    console.error(`[Corkcount] ${where} ${path}: error`, thrown);
   }
 }

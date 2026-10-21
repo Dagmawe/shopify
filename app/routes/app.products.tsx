@@ -91,7 +91,7 @@ export default function CaseSettings() {
         <s-paragraph>
           Shopify counts stock in bottles. Set how many bottles come in a case from your
           distributor, and when to reorder. Reorder point and par level are in bottles: when stock on
-          hand plus stock on order drops to the reorder point, CaseFlow suggests enough cases to get
+          hand plus stock on order drops to the reorder point, Corkcount suggests enough cases to get
           back to par.
         </s-paragraph>
         <Form method="get">

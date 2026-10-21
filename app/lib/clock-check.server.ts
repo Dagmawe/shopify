@@ -33,7 +33,7 @@ async function checkClock(): Promise<void> {
         [
           "",
           "==================================================================",
-          `[CaseFlow] This computer's clock is ${Math.abs(driftSeconds)} seconds ${direction} Shopify's.`,
+          `[Corkcount] This computer's clock is ${Math.abs(driftSeconds)} seconds ${direction} Shopify's.`,
           "Sign-in will fail and the app will show \"Handling response\" or a",
           "blank page. Fix: turn on automatic time sync.",
           "  Windows: right-click the taskbar clock > Adjust date and time >",
@@ -44,7 +44,7 @@ async function checkClock(): Promise<void> {
         ].join("\n"),
       );
     } else {
-      console.log(`[CaseFlow] Clock check OK (within ${Math.abs(driftSeconds)}s of Shopify).`);
+      console.log(`[Corkcount] Clock check OK (within ${Math.abs(driftSeconds)}s of Shopify).`);
     }
   } catch {
     // No network, or the check itself failed: never block the app over this.

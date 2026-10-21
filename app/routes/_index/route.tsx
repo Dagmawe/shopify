@@ -14,7 +14,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export const meta: MetaFunction = () => [
-  { title: "CaseFlow: purchase orders for wine & liquor stores" },
+  { title: "Corkcount: purchase orders for wine & liquor stores" },
   {
     name: "description",
     content:
@@ -28,18 +28,18 @@ export default function App() {
       <div className={styles.content}>
         <h1 className={styles.heading}>Order by the case. Sell by the bottle.</h1>
         <p className={styles.text}>
-          CaseFlow is purchase ordering and receiving for wine and liquor stores on Shopify.
+          Corkcount is purchase ordering and receiving for wine and liquor stores on Shopify.
         </p>
         {/* Shopify requires installs to start from the Shopify App Store or
             admin, so there is deliberately no "enter your store" form here. */}
         <p className={styles.text}>
-          Install CaseFlow from the Shopify App Store, then open it from your
+          Install Corkcount from the Shopify App Store, then open it from your
           Shopify admin.
         </p>
         <ul className={styles.list}>
           <li>
             <strong>Case-pack purchasing</strong>. Order from distributors in
-            cases; CaseFlow converts to bottles for your Shopify stock.
+            cases; Corkcount converts to bottles for your Shopify stock.
           </li>
           <li>
             <strong>Fast receiving</strong>. Count what arrived, click once,

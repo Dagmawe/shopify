@@ -34,7 +34,7 @@ model Session {
 }
 
 // ---------------------------------------------------------------------------
-// CaseFlow models. Every row is scoped to a shop so one database can serve
+// Corkcount models. Every row is scoped to a shop so one database can serve
 // many stores safely.
 // ---------------------------------------------------------------------------
 

@@ -18,11 +18,11 @@ const shopify = shopifyApp({
   authPathPrefix: "/auth",
   sessionStorage: new PrismaSessionStorage(prisma),
   distribution: AppDistribution.AppStore,
-  // Set CASEFLOW_DEBUG=true in .env to see every sign-in step (noisy, and it
+  // Set CORKCOUNT_DEBUG=true in .env to see every sign-in step (noisy, and it
   // prints session tokens). Otherwise: info while developing, warnings live.
   logger: {
     level:
-      process.env.CASEFLOW_DEBUG === "true"
+      process.env.CORKCOUNT_DEBUG === "true"
         ? LogSeverity.Debug
         : process.env.NODE_ENV === "production"
           ? LogSeverity.Warning

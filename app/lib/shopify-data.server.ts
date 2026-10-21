@@ -35,7 +35,7 @@ export async function getLocations(admin: AdminGraphql): Promise<Location[]> {
   const data = await gql<{ locations: { nodes: Location[] } }>(
     admin,
     `#graphql
-    query CaseFlowLocations {
+    query CorkcountLocations {
       locations(first: 50, includeInactive: false) {
         nodes { id name }
       }
@@ -77,7 +77,7 @@ export async function searchVariants(
   }>(
     admin,
     `#graphql
-    query CaseFlowVariants($query: String, $after: String) {
+    query CorkcountVariants($query: String, $after: String) {
       productVariants(first: 50, after: $after, query: $query, sortKey: TITLE) {
         nodes {
           id
@@ -130,7 +130,7 @@ export async function getAvailable(
       }>(
         admin,
         `#graphql
-        query CaseFlowLevelAt($ids: [ID!]!, $locationId: ID!) {
+        query CorkcountLevelAt($ids: [ID!]!, $locationId: ID!) {
           nodes(ids: $ids) {
             ... on InventoryItem {
               id
@@ -155,7 +155,7 @@ export async function getAvailable(
       }>(
         admin,
         `#graphql
-        query CaseFlowLevels($ids: [ID!]!) {
+        query CorkcountLevels($ids: [ID!]!) {
           nodes(ids: $ids) {
             ... on InventoryItem {
               id
@@ -191,7 +191,7 @@ async function ensureStockedAt(
   }>(
     admin,
     `#graphql
-    mutation CaseFlowActivate($inventoryItemId: ID!, $locationId: ID!) {
+    mutation CorkcountActivate($inventoryItemId: ID!, $locationId: ID!) {
       inventoryActivate(inventoryItemId: $inventoryItemId, locationId: $locationId) {
         inventoryLevel { id }
         userErrors { message }
@@ -213,7 +213,7 @@ async function hasLevelAt(
   }>(
     admin,
     `#graphql
-    query CaseFlowHasLevel($id: ID!, $locationId: ID!) {
+    query CorkcountHasLevel($id: ID!, $locationId: ID!) {
       inventoryItem(id: $id) {
         inventoryLevel(locationId: $locationId) { id }
       }
@@ -254,7 +254,7 @@ export async function addReceivedStock(
   }>(
     admin,
     `#graphql
-    mutation CaseFlowReceive($input: InventoryAdjustQuantitiesInput!, $idempotencyKey: String!) {
+    mutation CorkcountReceive($input: InventoryAdjustQuantitiesInput!, $idempotencyKey: String!) {
       inventoryAdjustQuantities(input: $input) @idempotent(key: $idempotencyKey) {
         inventoryAdjustmentGroup { id }
         userErrors { field message }

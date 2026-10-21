@@ -1,9 +1,9 @@
-# CaseFlow
+# Corkcount
 
 **Order by the case. Sell by the bottle.**
 Purchase ordering, receiving and reorder alerts for wine and liquor stores on Shopify.
 
-Shopify counts stock in single bottles, but distributors sell in cases of 6, 12 or 24. CaseFlow sits in between: stores order and receive in cases, and CaseFlow converts to bottles and updates their Shopify stock.
+Shopify counts stock in single bottles, but distributors sell in cases of 6, 12 or 24. Corkcount sits in between: stores order and receive in cases, and Corkcount converts to bottles and updates their Shopify stock.
 
 ---
 
@@ -17,7 +17,7 @@ Shopify counts stock in single bottles, but distributors sell in cases of 6, 12 
 | **Case settings** | For each product: bottles per case, cost per case, reorder point, par level, distributor |
 | **Distributors** | Contacts, lead time and minimum order (warns when an order is under the minimum) |
 
-**How reorder suggestions work.** When *bottles on hand + bottles already on order* drops to the reorder point, CaseFlow suggests enough whole cases to get back to the par level. Example: reorder point 12, par 48, 10 on hand, nothing on order → 38 bottles short → **4 cases** of 12.
+**How reorder suggestions work.** When *bottles on hand + bottles already on order* drops to the reorder point, Corkcount suggests enough whole cases to get back to the par level. Example: reorder point 12, par 48, 10 on hand, nothing on order → 38 bottles short → **4 cases** of 12.
 
 **Plans** (set up in Shopify, see step 6 below):
 
@@ -52,10 +52,10 @@ You'll type commands into a **terminal** (Terminal on Mac, PowerShell on Windows
 
 ### 3. Open the project and install it
 
-Unzip CaseFlow, then in the terminal:
+Unzip Corkcount, then in the terminal:
 
 ```
-cd path/to/caseflow
+cd path/to/shopify
 npm install
 cp .env.example .env
 ```
@@ -70,7 +70,7 @@ cp .env.example .env
 npm run config:link
 ```
 
-Choose **"Yes, create it as a new app"** and name it **CaseFlow**. This fills in `shopify.app.toml` for you.
+Choose **"Yes, create it as a new app"** and name it **Corkcount**. This fills in `shopify.app.toml` for you.
 
 Then start the app:
 
@@ -93,15 +93,15 @@ Stop the app any time with **Ctrl + C**; start it again with `npm run dev`.
 
 ### 6. Set up your pricing plans (before launch)
 
-CaseFlow uses Shopify **managed pricing**: Shopify shows the plan picker, runs the free trial and bills the merchant. You don't write billing code.
+Corkcount uses Shopify **managed pricing**: Shopify shows the plan picker, runs the free trial and bills the merchant. You don't write billing code.
 
-1. Partner Dashboard → **Apps → CaseFlow → Distribution** → choose **Shopify App Store**.
+1. Partner Dashboard → **Apps → Corkcount → Distribution** → choose **Shopify App Store**.
 2. In the listing, go to **Pricing** and choose **Managed pricing**.
 3. Create three monthly plans with a **14-day free trial**. The names must contain these words, because the app reads them:
    - `Starter` — $29/month
    - `Pro` — $59/month
    - `Premium` — $99/month
-4. During `npm run dev` the plan check is skipped, so every store acts as Pro. To test the real plan picker locally, add `CASEFLOW_BILLING_BYPASS=false` to `.env` and restart. Opening the app then sends you to Shopify's plan page. Development stores aren't charged.
+4. During `npm run dev` the plan check is skipped, so every store acts as Pro. To test the real plan picker locally, add `CORKCOUNT_BILLING_BYPASS=false` to `.env` and restart. Opening the app then sends you to Shopify's plan page. Development stores aren't charged.
 
 ---
 
@@ -113,14 +113,14 @@ CaseFlow uses Shopify **managed pricing**: Shopify shows the plan picker, runs t
 
 - Shopify's guide lists hosts that work well (Fly.io, Render, Railway, Google Cloud Run): [shopify.dev/docs/apps/launch/deployment](https://shopify.dev/docs/apps/launch/deployment). Expect roughly $5–25/month at the start.
 - **Switch the database to PostgreSQL** before launch. The included SQLite database is a single file, which is fine for testing but not for a live app. Most hosts offer a managed Postgres; change `provider = "sqlite"` to `"postgresql"` in `prisma/schema.prisma`, set `url = env("DATABASE_URL")`, delete the `prisma/migrations` folder, and run `npx prisma migrate dev --name init` once.
-- Set `NODE_ENV=production`, and make sure `CASEFLOW_BILLING_BYPASS` is **not** set on the server.
+- Set `NODE_ENV=production`, and make sure `CORKCOUNT_BILLING_BYPASS` is **not** set on the server.
 - Run `npm run deploy` to push your app configuration (scopes, webhooks) to Shopify.
 
 ### Submit for review
 
 1. Partner Dashboard → your app → **Distribution → Shopify App Store → App Store review**.
 2. Fill in the listing: name, icon (1200×1200 PNG/JPG), screenshots, description. Don't use Shopify's logo, don't promise revenue results, and don't put "Shopify" in your app's URL.
-3. **Protected customer data:** choose **opt out**. CaseFlow doesn't read customer information, which keeps your review simpler.
+3. **Protected customer data:** choose **opt out**. Corkcount doesn't read customer information, which keeps your review simpler.
 4. Add an emergency contact email and phone.
 5. Run the **automated checks** on that page and fix anything they flag.
 6. Provide a **screencast** (2–5 minutes, screen recording of the step 5 flow above) and **test-store login instructions** for the reviewer.
@@ -138,7 +138,7 @@ CaseFlow uses Shopify **managed pricing**: Shopify shows the plan picker, runs t
 ## Troubleshooting
 
 **The app shows "Handling response", "reconnecting to Shopify", or a blank page.**
-Check the terminal running `npm run dev` for `[CaseFlow]` and `[shopify-app/DEBUG]` lines.
+Check the terminal running `npm run dev` for `[Corkcount]` and `[shopify-app/DEBUG]` lines.
 
 - *`"exp" claim timestamp check failed`*: your computer's clock is off. Shopify's sign-in tokens last one minute, so even a few minutes of drift breaks sign-in. On Windows: right-click the taskbar clock → Adjust date and time → turn on **Set time automatically** → **Sync now**.
 - *API calls fail right after `npm run config:link`*: linking to an existing app copies that app's settings into `shopify.app.toml`, which can leave `scopes = ""`. Set it back to `scopes = "read_products,read_inventory,write_inventory,read_locations"`, restart `npm run dev`, and approve the permissions when Shopify asks.

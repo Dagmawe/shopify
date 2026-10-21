@@ -1,5 +1,5 @@
 // Plans are set up with Shopify "managed pricing" in the Partner Dashboard
-// (Apps > CaseFlow > Distribution > Manage listing > Pricing). Shopify shows
+// (Apps > Corkcount > Distribution > Manage listing > Pricing). Shopify shows
 // the plan picker, handles the 14-day trial and bills the merchant. This file
 // just reads which plan the store is on and decides what it unlocks.
 
@@ -30,11 +30,11 @@ function matchPlan(subscriptionName: string): PlanName | null {
 }
 
 // Whether to skip the plan check and treat every store as Pro.
-// - CASEFLOW_BILLING_BYPASS=true  -> always skip (testing only)
-// - CASEFLOW_BILLING_BYPASS=false -> always check (to test billing locally)
+// - CORKCOUNT_BILLING_BYPASS=true  -> always skip (testing only)
+// - CORKCOUNT_BILLING_BYPASS=false -> always check (to test billing locally)
 // - not set -> skip during `npm run dev`, check in production
 export function billingBypassed(): boolean {
-  const flag = process.env.CASEFLOW_BILLING_BYPASS;
+  const flag = process.env.CORKCOUNT_BILLING_BYPASS;
   if (flag === "true") return true;
   if (flag === "false") return false;
   return process.env.NODE_ENV !== "production";
@@ -45,7 +45,7 @@ export async function getActivePlan(admin: AdminGraphql): Promise<PlanFeatures |
 
   const response = await admin.graphql(
     `#graphql
-    query CaseFlowPlan {
+    query CorkcountPlan {
       currentAppInstallation {
         activeSubscriptions { name status }
       }
@@ -75,7 +75,7 @@ export async function getAppHandle(admin: AdminGraphql): Promise<string> {
   if (handleCache.value) return handleCache.value;
   const response = await admin.graphql(
     `#graphql
-    query CaseFlowAppHandle {
+    query CorkcountAppHandle {
       currentAppInstallation { app { handle } }
     }`,
   );

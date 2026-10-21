@@ -55,7 +55,7 @@ export default function Home() {
   const d = useLoaderData<typeof loader>();
 
   return (
-    <s-page heading="CaseFlow">
+    <s-page heading="Corkcount">
       {!d.setupDone && (
         <s-section heading="Get set up in three steps">
           <s-stack direction="block" gap="base">

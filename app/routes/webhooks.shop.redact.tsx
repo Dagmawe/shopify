@@ -3,10 +3,10 @@ import { authenticate } from "../shopify.server";
 import db from "../db.server";
 
 // Shopify sends this 48 hours after a store uninstalls the app. Delete
-// everything CaseFlow stored for that store.
+// everything Corkcount stored for that store.
 export const action = async ({ request }: ActionFunctionArgs) => {
   const { shop, topic } = await authenticate.webhook(request);
-  console.log(`Received ${topic} for ${shop}: deleting all CaseFlow data.`);
+  console.log(`Received ${topic} for ${shop}: deleting all Corkcount data.`);
 
   await db.$transaction([
     db.purchaseOrderLine.deleteMany({ where: { purchaseOrder: { shop } } }),

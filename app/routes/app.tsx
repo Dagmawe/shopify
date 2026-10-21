@@ -44,7 +44,7 @@ export function ErrorBoundary() {
     if (error.data) return boundary.error(error);
     return (
       <div style={{ padding: 16, fontFamily: "Inter, sans-serif" }}>
-        CaseFlow is reconnecting to Shopify (status {error.status}
+        Corkcount is reconnecting to Shopify (status {error.status}
         {error.statusText ? ` ${error.statusText}` : ""}). If this stays on
         screen, check the terminal running <code>npm run dev</code>.
       </div>
@@ -54,7 +54,7 @@ export function ErrorBoundary() {
   return (
     <div style={{ padding: 16, fontFamily: "Inter, sans-serif" }}>
       <p>
-        <strong>CaseFlow hit an error:</strong> {message}
+        <strong>Corkcount hit an error:</strong> {message}
       </p>
     </div>
   );
