@@ -136,6 +136,17 @@ CaseFlow uses Shopify **managed pricing**: Shopify shows the plan picker, runs t
 
 ---
 
+## Troubleshooting
+
+**The app shows "Handling response", "reconnecting to Shopify", or a blank page.**
+Check the terminal running `npm run dev` for `[CaseFlow]` and `[shopify-app/DEBUG]` lines.
+
+- *`"exp" claim timestamp check failed`*: your computer's clock is off. Shopify's sign-in tokens last one minute, so even a few minutes of drift breaks sign-in. On Windows: right-click the taskbar clock → Adjust date and time → turn on **Set time automatically** → **Sync now**.
+- *API calls fail right after `npm run config:link`*: linking to an existing app copies that app's settings into `shopify.app.toml`, which can leave `scopes = ""`. Set it back to `scopes = "read_products,read_inventory,write_inventory,read_locations"`, restart `npm run dev`, and approve the permissions when Shopify asks.
+- *`Server-only module referenced by client`*: a page component is using something from a `.server.ts` file. Move the shared piece into a normal file under `app/lib/`.
+
+**Keep the project out of OneDrive or Dropbox.** File syncing can lock the database and `node_modules` while the app runs.
+
 ## Where things live (for when you change the code)
 
 ```

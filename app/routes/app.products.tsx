@@ -82,7 +82,7 @@ export default function CaseSettings() {
   const shopify = useAppBridge();
 
   useEffect(() => {
-    if (result?.saved) shopify.toast.show(`Saved ${result.saved} products`);
+    if (result?.saved) shopify.toast.show(`Saved ${result.saved} product${result.saved === 1 ? "" : "s"}`);
   }, [result, shopify]);
 
   return (

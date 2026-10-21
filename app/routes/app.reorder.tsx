@@ -178,7 +178,7 @@ export default function Reorder() {
                         </s-table-cell>
                         <s-table-cell>{r.incoming ? formatUnits(r.incoming, r.caseSize) : "—"}</s-table-cell>
                         <s-table-cell>{formatUnits(r.reorderPoint, r.caseSize)}</s-table-cell>
-                        <s-table-cell>{r.cases} cs</s-table-cell>
+                        <s-table-cell>Order {r.cases} cs</s-table-cell>
                       </s-table-row>
                     ))}
                   </s-table-body>

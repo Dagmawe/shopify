@@ -95,7 +95,8 @@ export async function searchVariants(
     rows: data.productVariants.nodes.map((n) => ({
       variantId: n.id,
       inventoryItemId: n.inventoryItem.id,
-      title: n.displayName,
+      // Products without variants are named "Wine - Default Title"; drop that part.
+      title: n.displayName.replace(/ - Default Title$/, ""),
       sku: n.sku || null,
       available: n.inventoryQuantity ?? 0,
     })),

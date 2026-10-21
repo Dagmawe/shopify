@@ -4,7 +4,8 @@ import { boundary } from "@shopify/shopify-app-react-router/server";
 import db from "../db.server";
 import { requireApp } from "../lib/context.server";
 import { formatMoney } from "../lib/units";
-import { poTotals, STATUS_LABEL, STATUS_TONE } from "../models/purchase-orders.server";
+import { poTotals } from "../models/purchase-orders.server";
+import { STATUS_LABEL, STATUS_TONE } from "../lib/status";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { shop } = await requireApp(request);
@@ -92,7 +93,7 @@ export default function PurchaseOrders() {
                   </s-table-cell>
                   <s-table-cell>{o.cases}</s-table-cell>
                   <s-table-cell>{formatMoney(o.cost)}</s-table-cell>
-                  <s-table-cell>{o.expectedAt ?? "—"}</s-table-cell>
+                  <s-table-cell>{o.expectedAt ? `Due ${o.expectedAt}` : "No delivery date"}</s-table-cell>
                 </s-table-row>
               ))}
             </s-table-body>

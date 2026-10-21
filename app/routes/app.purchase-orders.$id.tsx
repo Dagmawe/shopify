@@ -5,12 +5,8 @@ import db from "../db.server";
 import { floatField, intField, requireApp } from "../lib/context.server";
 import { addReceivedStock } from "../lib/shopify-data.server";
 import { formatMoney, formatUnits, lineCost, lineOrderedUnits, toUnits } from "../lib/units";
-import {
-  poTotals,
-  statusAfterReceiving,
-  STATUS_LABEL,
-  STATUS_TONE,
-} from "../models/purchase-orders.server";
+import { poTotals, statusAfterReceiving } from "../models/purchase-orders.server";
+import { STATUS_LABEL, STATUS_TONE } from "../lib/status";
 
 async function findOrder(shop: string, idParam: string | undefined) {
   const id = Number.parseInt(idParam ?? "", 10);
@@ -409,7 +405,9 @@ export default function PurchaseOrderDetail() {
       {/* ---------------- Placed: receiving ---------------- */}
       {!isDraft && (
         <s-section heading={isOpen ? "Receive delivery" : "Products"}>
-          <Form method="post">
+          {/* The key changes after every delivery, which clears the boxes so the
+              same delivery can't be added to stock twice by clicking again. */}
+          <Form method="post" key={order.lines.map((l) => l.received).join("-")}>
             <input type="hidden" name="intent" value="receive" />
             <s-stack direction="block" gap="base">
               {isOpen && (
