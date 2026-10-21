@@ -31,11 +31,10 @@ A production-ready Shopify B2B app built with **Remix (React Router)**, **Shopif
    ```bash
    npm install
    npx prisma generate
-   npx prisma db push
    ```
 
 2. **Link to your Shopify Partner Account (`5246084`) and run on `dlegesse-store.myshopify.com`:**
    ```bash
    npm run dev
    ```
-   *(On first run, Shopify CLI will prompt you to log into your Partner account in the browser, create the app under Partner ID `5246084`, and generate a preview URL on `dlegesse-store.myshopify.com`.)*
+   *(Uses `@shopify/cli@3.88.1` configured in [`package.json`](./package.json) for compatibility with both Node 20 and Shopify's Partner GraphQL API >= 3.84.1.)*
