@@ -8,7 +8,8 @@ import {
 
 // Small in-memory cache so we don't ask Shopify for the plan on every click.
 const planCache = new Map<string, { plan: PlanFeatures; expires: number }>();
-const PLAN_CACHE_MS = 5 * 60 * 1000;
+// Kept short so a merchant who just changed plans sees the new plan right away.
+const PLAN_CACHE_MS = 30 * 1000;
 
 // Every app page calls this first. It signs the merchant in, makes sure the
 // store has picked a plan (sending them to Shopify's plan page if not), and

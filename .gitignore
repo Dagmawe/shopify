@@ -32,3 +32,6 @@ pnpm-lock.yaml
 
 # Keep the example settings file in git
 !.env.example
+
+# Output of `shopify doc fetch` for the App Store self-review
+review-requirements.md
