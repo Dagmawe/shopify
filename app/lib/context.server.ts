@@ -9,6 +9,15 @@ const PLAN_CACHE_MS = 5 * 60 * 1000;
 // store has picked a plan (sending them to Shopify's plan page if not), and
 // returns what the page needs.
 export async function requireApp(request: Request) {
+  try {
+    return await requireAppInner(request);
+  } catch (thrown) {
+    logThrown("page", request, thrown);
+    throw thrown;
+  }
+}
+
+async function requireAppInner(request: Request) {
   const context = await authenticate.admin(request);
   const shop = context.session.shop;
 
@@ -51,4 +60,18 @@ export function textField(form: FormData, key: string): string | null {
   if (raw == null) return null;
   const s = String(raw).trim();
   return s ? s : null;
+}
+
+// Logs why a request was stopped (a redirect, a sign-in retry, or an error),
+// so the terminal shows the reason instead of a blank screen.
+export function logThrown(where: string, request: Request, thrown: unknown) {
+  const path = new URL(request.url).pathname;
+  if (thrown instanceof Response) {
+    console.warn(
+      `[CaseFlow] ${where} ${path}: stopped with HTTP ${thrown.status}` +
+        (thrown.headers.get("Location") ? ` -> ${thrown.headers.get("Location")}` : ""),
+    );
+  } else {
+    console.error(`[CaseFlow] ${where} ${path}: error`, thrown);
+  }
 }

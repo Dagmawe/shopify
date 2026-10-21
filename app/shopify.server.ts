@@ -2,6 +2,7 @@ import "@shopify/shopify-app-react-router/adapters/node";
 import {
   ApiVersion,
   AppDistribution,
+  LogSeverity,
   shopifyApp,
 } from "@shopify/shopify-app-react-router/server";
 import { PrismaSessionStorage } from "@shopify/shopify-app-session-storage-prisma";
@@ -16,6 +17,11 @@ const shopify = shopifyApp({
   authPathPrefix: "/auth",
   sessionStorage: new PrismaSessionStorage(prisma),
   distribution: AppDistribution.AppStore,
+  // Detailed sign-in and API logs while developing; warnings only in production.
+  logger: {
+    level:
+      process.env.NODE_ENV === "production" ? LogSeverity.Warning : LogSeverity.Debug,
+  },
   future: {
     expiringOfflineAccessTokens: true,
   },
