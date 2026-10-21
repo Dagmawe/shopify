@@ -1,0 +1,16 @@
+api_version = "2025-01"
+
+[[extensions]]
+name = "t:name"
+handle = "b2b-cart-validator"
+type = "function"
+description = "Enforces B2B Minimum Order Value (MOV), Minimum Order Quantity (MOQ), per-SKU Case-Pack multiples, and Mix-and-Match Case multiples at Cart and Checkout."
+
+  [[extensions.targeting]]
+  target = "purchase.validation.run"
+  input_query = "src/run.graphql"
+  export = "run"
+
+  [extensions.build]
+  command = ""
+  path = "dist/function.wasm"

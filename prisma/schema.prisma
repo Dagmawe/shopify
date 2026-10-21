@@ -1,0 +1,56 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:dev.sqlite"
+}
+
+model Session {
+  id                  String    @id
+  shop                String
+  state               String
+  isOnline            Boolean   @default(false)
+  scope               String?
+  expires             DateTime?
+  accessToken         String
+  userId              BigInt?
+  firstName           String?
+  lastName            String?
+  email               String?
+  accountOwner        Boolean   @default(false)
+  locale              String?
+  collaborator        Boolean?  @default(false)
+  emailVerified       Boolean?  @default(false)
+  refreshToken        String?
+  refreshTokenExpires DateTime?
+}
+
+model B2bValidationRule {
+  id                  String   @id @default(cuid())
+  shop                String
+  title               String
+  enabled             Boolean  @default(true)
+  // Audience targeting: "ALL" | "B2B_TAGGED" | "NON_B2B"
+  targetAudience      String   @default("B2B_TAGGED")
+  // Customer tag to check in Shopify Function (e.g. "B2B", "Wholesale")
+  customerTag         String   @default("B2B")
+  // Minimum Order Value in store currency (0 = disabled)
+  minOrderSubtotal    Float    @default(0)
+  // Minimum Total Units across the entire cart (0 = disabled)
+  minTotalQuantity    Int      @default(0)
+  // Per-SKU Case Pack Multiple (e.g., 6 means every line item quantity must be a multiple of 6; 1 = disabled)
+  casePackMultiple    Int      @default(1)
+  // Mix-and-Match Total Cart Case Multiple (e.g., 12 means total cart quantity must be divisible by 12; 1 = disabled)
+  mixMatchCaseMultiple Int     @default(1)
+  // Custom error message template shown at cart/checkout when blocked
+  customErrorPrefix   String   @default("Wholesale Order Requirement:")
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([shop])
+}

@@ -1,0 +1,36 @@
+# This file stores configurations for your Shopify B2B Order Minimums & Case-Pack Validator app.
+# Run `npm run config:link` to link this automatically to your Partner account (5246084).
+
+name = "b2b-order-validator"
+client_id = ""
+application_url = "https://example.com"
+embedded = true
+
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = "dlegesse-store.myshopify.com"
+
+[access_scopes]
+# Scopes needed for B2B Cart & Checkout Validation Rules and Product/Customer Tag inspection
+scopes = "read_products,read_customers,read_validations,write_validations"
+
+[auth]
+redirect_urls = [
+  "https://example.com/auth/callback",
+  "https://example.com/auth/shopify/callback",
+  "https://example.com/api/auth/callback"
+]
+
+[webhooks]
+api_version = "2025-01"
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/app/uninstalled"
+  topics = ["app/uninstalled"]
+
+  [[webhooks.subscriptions]]
+  topics = ["app/scopes_update"]
+  uri = "/webhooks/app/scopes_update"
+
+[pos]
+embedded = false
