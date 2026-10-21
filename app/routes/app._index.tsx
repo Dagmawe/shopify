@@ -3,6 +3,7 @@ import { useLoaderData } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import db from "../db.server";
 import { requireApp } from "../lib/context.server";
+import { billingBypassed, getAppHandle, planSelectionUrl } from "../lib/plan.server";
 import { getReorderRows } from "../models/reorder.server";
 import { OPEN_STATUSES } from "../models/purchase-orders.server";
 
@@ -31,6 +32,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   return {
     plan: plan.name,
+    planUrl: planSelectionUrl(shop, await getAppHandle(admin)),
+    testMode: billingBypassed(),
     setupDone: distributorCount > 0 && settingCount > 0,
     distributorCount,
     settingCount,
@@ -134,7 +137,16 @@ export default function Home() {
       </s-section>
 
       <s-section slot="aside" heading="Your plan">
-        <s-paragraph>You're on the {d.plan} plan.</s-paragraph>
+        <s-stack direction="block" gap="base">
+          <s-paragraph>
+            {d.testMode
+              ? `Development mode: every store acts as ${d.plan}.`
+              : `You're on the ${d.plan} plan.`}
+          </s-paragraph>
+          <s-link href={d.planUrl} target="_top">
+            Change plan
+          </s-link>
+        </s-stack>
       </s-section>
     </s-page>
   );

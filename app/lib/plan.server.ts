@@ -67,16 +67,35 @@ export async function getActivePlan(admin: AdminGraphql): Promise<PlanFeatures |
   return null;
 }
 
+// The app's own handle (the part after /apps/ in admin URLs), read from
+// Shopify rather than configured, so it can't point at a different app.
+const handleCache = { value: null as string | null };
+
+export async function getAppHandle(admin: AdminGraphql): Promise<string> {
+  if (handleCache.value) return handleCache.value;
+  const response = await admin.graphql(
+    `#graphql
+    query CaseFlowAppHandle {
+      currentAppInstallation { app { handle } }
+    }`,
+  );
+  const json = (await response.json()) as {
+    data?: { currentAppInstallation: { app: { handle: string | null } } };
+  };
+  const handle = json.data?.currentAppInstallation.app.handle;
+  if (!handle) throw new Error("Shopify didn't return this app's handle.");
+  handleCache.value = handle;
+  return handle;
+}
+
 // Shopify's hosted plan-selection page for managed pricing, in the form the
 // app's redirect helper expects (it opens the page in the top admin window).
-export function planSelectionRedirectPath(): string {
-  const appHandle = process.env.SHOPIFY_APP_HANDLE || "caseflow";
+export function planSelectionRedirectPath(appHandle: string): string {
   return `shopify://admin/charges/${appHandle}/pricing_plans`;
 }
 
-// Same page as a full link, for "See plans" buttons.
-export function planSelectionUrl(shop: string): string {
+// Same page as a full link, for "See plans" and "Change plan" links.
+export function planSelectionUrl(shop: string, appHandle: string): string {
   const storeHandle = shop.replace(".myshopify.com", "");
-  const appHandle = process.env.SHOPIFY_APP_HANDLE || "caseflow";
   return `https://admin.shopify.com/store/${storeHandle}/charges/${appHandle}/pricing_plans`;
 }

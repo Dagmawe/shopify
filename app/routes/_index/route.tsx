@@ -1,7 +1,5 @@
-import type { LoaderFunctionArgs } from "react-router";
-import { redirect, Form, useLoaderData } from "react-router";
-
-import { login } from "../../shopify.server";
+import type { LoaderFunctionArgs, MetaFunction } from "react-router";
+import { redirect } from "react-router";
 
 import styles from "./styles.module.css";
 
@@ -12,12 +10,19 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     throw redirect(`/app?${url.searchParams.toString()}`);
   }
 
-  return { showForm: Boolean(login) };
+  return null;
 };
 
-export default function App() {
-  const { showForm } = useLoaderData<typeof loader>();
+export const meta: MetaFunction = () => [
+  { title: "CaseFlow: purchase orders for wine & liquor stores" },
+  {
+    name: "description",
+    content:
+      "Order from distributors by the case, receive deliveries in one click, and get reorder alerts. Built for Shopify wine and liquor stores.",
+  },
+];
 
+export default function App() {
   return (
     <div className={styles.index}>
       <div className={styles.content}>
@@ -25,18 +30,12 @@ export default function App() {
         <p className={styles.text}>
           CaseFlow is purchase ordering and receiving for wine and liquor stores on Shopify.
         </p>
-        {showForm && (
-          <Form className={styles.form} method="post" action="/auth/login">
-            <label className={styles.label}>
-              <span>Shop domain</span>
-              <input className={styles.input} type="text" name="shop" />
-              <span>e.g: my-shop-domain.myshopify.com</span>
-            </label>
-            <button className={styles.button} type="submit">
-              Log in
-            </button>
-          </Form>
-        )}
+        {/* Shopify requires installs to start from the Shopify App Store or
+            admin, so there is deliberately no "enter your store" form here. */}
+        <p className={styles.text}>
+          Install CaseFlow from the Shopify App Store, then open it from your
+          Shopify admin.
+        </p>
         <ul className={styles.list}>
           <li>
             <strong>Case-pack purchasing</strong>. Order from distributors in

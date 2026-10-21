@@ -3,7 +3,7 @@ import { Form, redirect, useActionData, useLoaderData, useNavigation } from "rea
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import db from "../db.server";
 import { requireApp } from "../lib/context.server";
-import { planSelectionUrl } from "../lib/plan.server";
+import { getAppHandle, planSelectionUrl } from "../lib/plan.server";
 import { getLocations } from "../lib/shopify-data.server";
 import { formatMoney, formatUnits } from "../lib/units";
 import { nextPoNumber } from "../models/purchase-orders.server";
@@ -31,7 +31,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       a.distributorId == null ? 1 : b.distributorId == null ? -1 : a.name.localeCompare(b.name),
     ),
     canAutoDraft: plan.autoDraftOrders,
-    upgradeUrl: planSelectionUrl(shop),
+    upgradeUrl: planSelectionUrl(shop, await getAppHandle(admin)),
   };
 };
 

@@ -7,6 +7,7 @@ import {
 } from "@shopify/shopify-app-react-router/server";
 import { PrismaSessionStorage } from "@shopify/shopify-app-session-storage-prisma";
 import prisma from "./db.server";
+import { checkClockOnce } from "./lib/clock-check.server";
 
 const shopify = shopifyApp({
   apiKey: process.env.SHOPIFY_API_KEY,
@@ -17,10 +18,15 @@ const shopify = shopifyApp({
   authPathPrefix: "/auth",
   sessionStorage: new PrismaSessionStorage(prisma),
   distribution: AppDistribution.AppStore,
-  // Detailed sign-in and API logs while developing; warnings only in production.
+  // Set CASEFLOW_DEBUG=true in .env to see every sign-in step (noisy, and it
+  // prints session tokens). Otherwise: info while developing, warnings live.
   logger: {
     level:
-      process.env.NODE_ENV === "production" ? LogSeverity.Warning : LogSeverity.Debug,
+      process.env.CASEFLOW_DEBUG === "true"
+        ? LogSeverity.Debug
+        : process.env.NODE_ENV === "production"
+          ? LogSeverity.Warning
+          : LogSeverity.Info,
   },
   future: {
     expiringOfflineAccessTokens: true,
@@ -29,6 +35,8 @@ const shopify = shopifyApp({
     ? { customShopDomains: [process.env.SHOP_CUSTOM_DOMAIN] }
     : {}),
 });
+
+checkClockOnce();
 
 export default shopify;
 export const apiVersion = ApiVersion.October26;
