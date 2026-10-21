@@ -1,5 +1,5 @@
 import { authenticate } from "../shopify.server";
-import { getActivePlan, planSelectionUrl, type PlanFeatures } from "./plan.server";
+import { getActivePlan, planSelectionRedirectPath, type PlanFeatures } from "./plan.server";
 
 // Small in-memory cache so we don't ask Shopify for the plan on every click.
 const planCache = new Map<string, { plan: PlanFeatures; expires: number }>();
@@ -22,7 +22,7 @@ export async function requireApp(request: Request) {
   }
 
   if (!plan) {
-    throw context.redirect(planSelectionUrl(shop), { target: "_top" });
+    throw context.redirect(planSelectionRedirectPath(), { target: "_top" });
   }
 
   return { ...context, shop, plan };

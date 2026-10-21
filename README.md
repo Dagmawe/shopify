@@ -101,8 +101,8 @@ CaseFlow uses Shopify **managed pricing**: Shopify shows the plan picker, runs t
    - `Starter` — $29/month
    - `Pro` — $59/month
    - `Premium` — $99/month
-4. In `.env`, delete the line `CASEFLOW_BILLING_BYPASS=true` and set `SHOPIFY_APP_HANDLE` to your app's handle (the last part of the app's Partner Dashboard URL).
-5. Restart with `npm run dev`. Opening the app now sends you to Shopify's plan page. Development stores aren't charged.
+4. In `.env`, set `SHOPIFY_APP_HANDLE` to your app's handle (the last part of the app's Partner Dashboard URL).
+5. During `npm run dev` the plan check is skipped, so every store acts as Pro. To test the real plan picker locally, add `CASEFLOW_BILLING_BYPASS=false` to `.env` and restart. Opening the app then sends you to Shopify's plan page. Development stores aren't charged.
 
 ---
 

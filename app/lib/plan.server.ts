@@ -29,10 +29,19 @@ function matchPlan(subscriptionName: string): PlanName | null {
   return null;
 }
 
+// Whether to skip the plan check and treat every store as Pro.
+// - CASEFLOW_BILLING_BYPASS=true  -> always skip (testing only)
+// - CASEFLOW_BILLING_BYPASS=false -> always check (to test billing locally)
+// - not set -> skip during `npm run dev`, check in production
+export function billingBypassed(): boolean {
+  const flag = process.env.CASEFLOW_BILLING_BYPASS;
+  if (flag === "true") return true;
+  if (flag === "false") return false;
+  return process.env.NODE_ENV !== "production";
+}
+
 export async function getActivePlan(admin: AdminGraphql): Promise<PlanFeatures | null> {
-  // Lets you build and test before plans exist in the Partner Dashboard.
-  // Never set this on your production server.
-  if (process.env.CASEFLOW_BILLING_BYPASS === "true") return FEATURES.Pro;
+  if (billingBypassed()) return FEATURES.Pro;
 
   const response = await admin.graphql(
     `#graphql
@@ -58,7 +67,14 @@ export async function getActivePlan(admin: AdminGraphql): Promise<PlanFeatures |
   return null;
 }
 
-// Shopify's hosted plan-selection page for managed pricing.
+// Shopify's hosted plan-selection page for managed pricing, in the form the
+// app's redirect helper expects (it opens the page in the top admin window).
+export function planSelectionRedirectPath(): string {
+  const appHandle = process.env.SHOPIFY_APP_HANDLE || "caseflow";
+  return `shopify://admin/charges/${appHandle}/pricing_plans`;
+}
+
+// Same page as a full link, for "See plans" buttons.
 export function planSelectionUrl(shop: string): string {
   const storeHandle = shop.replace(".myshopify.com", "");
   const appHandle = process.env.SHOPIFY_APP_HANDLE || "caseflow";
