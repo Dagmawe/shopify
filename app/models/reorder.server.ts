@@ -1,7 +1,7 @@
 import db from "../db.server";
 import { getAvailable, type AdminGraphql } from "../lib/shopify-data.server";
 import { suggestedCases } from "../lib/units";
-import { incomingByVariant } from "./purchase-orders.server";
+import { draftsByVariant, incomingByVariant } from "./purchase-orders.server";
 
 export interface ReorderRow {
   settingId: number;
@@ -17,6 +17,9 @@ export interface ReorderRow {
   costPerCase: number | null;
   distributorId: number | null;
   distributorName: string | null;
+  inventoryItemId: string;
+  // Set when the product is already on a draft order that hasn't been placed.
+  draft: { orderId: number; number: number } | null;
 }
 
 // Every product with a reorder point or par level that is at or below its
@@ -29,9 +32,10 @@ export async function getReorderRows(admin: AdminGraphql, shop: string): Promise
   });
   if (!settings.length) return [];
 
-  const [available, incoming] = await Promise.all([
+  const [available, incoming, drafts] = await Promise.all([
     getAvailable(admin, settings.map((s) => s.inventoryItemId)),
     incomingByVariant(shop),
+    draftsByVariant(shop),
   ]);
 
   const rows: ReorderRow[] = [];
@@ -60,6 +64,8 @@ export async function getReorderRows(admin: AdminGraphql, shop: string): Promise
       costPerCase: s.costPerCase,
       distributorId: s.distributor?.id ?? null,
       distributorName: s.distributor?.name ?? null,
+      inventoryItemId: s.inventoryItemId,
+      draft: drafts.get(s.variantId) ?? null,
     });
   }
   return rows;

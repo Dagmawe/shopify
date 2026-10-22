@@ -4,7 +4,7 @@ import { boundary } from "@shopify/shopify-app-react-router/server";
 import db from "../db.server";
 import { requireApp } from "../lib/context.server";
 import { getAppHandle, planSelectionUrl } from "../lib/plan.server";
-import { getLocations } from "../lib/shopify-data.server";
+import { getAvailable, getLocations } from "../lib/shopify-data.server";
 import { formatMoney, formatUnits } from "../lib/units";
 import { nextPoNumber } from "../models/purchase-orders.server";
 import { getReorderRows, type ReorderRow } from "../models/reorder.server";
@@ -46,11 +46,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const rows = (await getReorderRows(admin, shop)).filter(
     (r) =>
       r.distributorId != null &&
+      r.draft == null &&
       (onlyDistributor == null || String(r.distributorId) === String(onlyDistributor)),
   );
-  if (!rows.length) return { error: "Nothing to reorder from a linked distributor." };
+  if (!rows.length) {
+    return { error: "These products are already on a draft order. Open it from Purchase orders." };
+  }
 
-  const location = (await getLocations(admin))[0];
+  const locations = await getLocations(admin);
   const byDistributor = new Map<number, ReorderRow[]>();
   for (const r of rows) {
     const list = byDistributor.get(r.distributorId!) ?? [];
@@ -66,6 +69,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   let created = 0;
   let lastId = 0;
   for (const [distributorId, list] of byDistributor) {
+    const location = await busiestLocation(
+      admin,
+      locations,
+      list.map((r) => r.inventoryItemId),
+    );
     const order = await db.purchaseOrder.create({
       data: {
         shop,
@@ -95,11 +103,34 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   return redirect("/app/purchase-orders");
 };
 
+// Deliver to the location that already holds most of these products, so
+// stock lands where it's sold. Falls back to the first location.
+async function busiestLocation(
+  admin: Parameters<typeof getAvailable>[0],
+  locations: Awaited<ReturnType<typeof getLocations>>,
+  inventoryItemIds: string[],
+) {
+  if (locations.length <= 1) return locations[0];
+  let best = locations[0];
+  let bestTotal = -1;
+  for (const loc of locations) {
+    const levels = await getAvailable(admin, inventoryItemIds, loc.id);
+    const total = Array.from(levels.values()).reduce((sum, q) => sum + Math.max(0, q), 0);
+    if (total > bestTotal) {
+      best = loc;
+      bestTotal = total;
+    }
+  }
+  return best;
+}
+
 export default function Reorder() {
   const { groups, canAutoDraft, upgradeUrl } = useLoaderData<typeof loader>();
   const result = useActionData<typeof action>();
   const saving = useNavigation().state === "submitting";
-  const linkedGroups = groups.filter((g) => g.distributorId != null);
+  const linkedGroups = groups.filter(
+    (g) => g.distributorId != null && g.rows.some((r) => r.draft == null),
+  );
 
   return (
     <s-page heading="Reorder">
@@ -141,9 +172,10 @@ export default function Reorder() {
         </s-section>
       ) : (
         groups.map((g) => {
-          const cases = g.rows.reduce((sum, r) => sum + r.cases, 0);
-          const costKnown = g.rows.every((r) => r.costPerCase != null);
-          const cost = g.rows.reduce((sum, r) => sum + (r.costPerCase ?? 0) * r.cases, 0);
+          const toOrder = g.rows.filter((r) => r.draft == null);
+          const cases = toOrder.reduce((sum, r) => sum + r.cases, 0);
+          const costKnown = toOrder.every((r) => r.costPerCase != null);
+          const cost = toOrder.reduce((sum, r) => sum + (r.costPerCase ?? 0) * r.cases, 0);
           return (
             <s-section key={g.distributorId ?? "none"} heading={g.name}>
               <s-stack direction="block" gap="base">
@@ -178,12 +210,25 @@ export default function Reorder() {
                         </s-table-cell>
                         <s-table-cell>{r.incoming ? formatUnits(r.incoming, r.caseSize) : "—"}</s-table-cell>
                         <s-table-cell>{formatUnits(r.reorderPoint, r.caseSize)}</s-table-cell>
-                        <s-table-cell>Order {r.cases} cs</s-table-cell>
+                        <s-table-cell>
+                          {r.draft ? (
+                            <s-link href={`/app/purchase-orders/${r.draft.orderId}`}>
+                              In draft #{r.draft.number}
+                            </s-link>
+                          ) : (
+                            `Order ${r.cases} cs`
+                          )}
+                        </s-table-cell>
                       </s-table-row>
                     ))}
                   </s-table-body>
                 </s-table>
-                {g.distributorId != null && (
+                {g.distributorId != null && toOrder.length === 0 && (
+                  <s-paragraph>
+                    Already on a draft order. Place it with {g.name}, then mark it as ordered.
+                  </s-paragraph>
+                )}
+                {g.distributorId != null && toOrder.length > 0 && (
                   <s-stack direction="inline" gap="base">
                     <s-text>
                       {cases} cases{costKnown ? ` · about ${formatMoney(cost)}` : ""}

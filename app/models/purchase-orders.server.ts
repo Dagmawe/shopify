@@ -44,19 +44,39 @@ export function poTotals(
   }>,
 ) {
   let cases = 0;
+  let loose = 0;
   let units = 0;
   let received = 0;
   let cost = 0;
   let costKnown = true;
   for (const line of lines) {
     cases += line.casesOrdered;
+    loose += line.looseOrdered;
     units += lineOrderedUnits(line);
     received += line.unitsReceived;
     const c = lineCost(line);
     if (c == null) costKnown = false;
     else cost += c;
   }
-  return { cases, units, received, cost: costKnown ? cost : null };
+  return { cases, loose, units, received, cost: costKnown ? cost : null };
+}
+
+// Products already on a draft order, so the Reorder page doesn't suggest them twice.
+export async function draftsByVariant(
+  shop: string,
+): Promise<Map<string, { orderId: number; number: number }>> {
+  const lines = await db.purchaseOrderLine.findMany({
+    where: { purchaseOrder: { shop, status: "DRAFT" } },
+    select: { variantId: true, purchaseOrder: { select: { id: true, number: true } } },
+    orderBy: { purchaseOrder: { number: "asc" } },
+  });
+  const map = new Map<string, { orderId: number; number: number }>();
+  for (const l of lines) {
+    if (!map.has(l.variantId)) {
+      map.set(l.variantId, { orderId: l.purchaseOrder.id, number: l.purchaseOrder.number });
+    }
+  }
+  return map;
 }
 
 // Sets PARTIAL or RECEIVED based on what has arrived so far.

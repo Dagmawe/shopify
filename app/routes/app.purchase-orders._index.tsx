@@ -3,7 +3,7 @@ import { useLoaderData } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import db from "../db.server";
 import { requireApp } from "../lib/context.server";
-import { formatMoney } from "../lib/units";
+import { formatCasesAndBottles, formatMoney } from "../lib/units";
 import { poTotals } from "../models/purchase-orders.server";
 import { STATUS_LABEL, STATUS_TONE } from "../lib/status";
 
@@ -22,8 +22,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     include: { distributor: { select: { name: true } }, lines: true },
   });
 
+  const anyOrders = orders.length > 0 || (await db.purchaseOrder.count({ where: { shop } })) > 0;
+
   return {
     show,
+    anyOrders,
     orders: orders.map((o) => {
       const totals = poTotals(o.lines);
       return {
@@ -31,7 +34,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         number: o.number,
         status: o.status,
         distributor: o.distributor.name,
-        cases: totals.cases,
+        quantity: formatCasesAndBottles(totals.cases, totals.loose),
         cost: totals.cost,
         expectedAt: o.expectedAt?.toISOString().slice(0, 10) ?? null,
         createdAt: o.createdAt.toISOString().slice(0, 10),
@@ -41,7 +44,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export default function PurchaseOrders() {
-  const { orders, show } = useLoaderData<typeof loader>();
+  const { orders, show, anyOrders } = useLoaderData<typeof loader>();
 
   return (
     <s-page heading="Purchase orders">
@@ -62,7 +65,11 @@ export default function PurchaseOrders() {
         </s-stack>
       </s-section>
       <s-section>
-        {orders.length === 0 ? (
+        {orders.length === 0 && anyOrders ? (
+          <s-paragraph>
+            No open purchase orders. Received and cancelled orders are under All.
+          </s-paragraph>
+        ) : orders.length === 0 ? (
           <s-paragraph>
             No purchase orders yet. Create one here, or let the Reorder page build drafts for you
             from products that are running low.
@@ -73,7 +80,7 @@ export default function PurchaseOrders() {
               <s-table-header listSlot="primary">PO</s-table-header>
               <s-table-header>Distributor</s-table-header>
               <s-table-header>Status</s-table-header>
-              <s-table-header format="numeric">Cases</s-table-header>
+              <s-table-header>Quantity</s-table-header>
               <s-table-header format="currency">Cost</s-table-header>
               <s-table-header>Expected</s-table-header>
             </s-table-header-row>
@@ -91,7 +98,7 @@ export default function PurchaseOrders() {
                       {STATUS_LABEL[o.status] ?? o.status}
                     </s-badge>
                   </s-table-cell>
-                  <s-table-cell>{o.cases}</s-table-cell>
+                  <s-table-cell>{o.quantity}</s-table-cell>
                   <s-table-cell>{formatMoney(o.cost)}</s-table-cell>
                   <s-table-cell>{o.expectedAt ? `Due ${o.expectedAt}` : "No delivery date"}</s-table-cell>
                 </s-table-row>

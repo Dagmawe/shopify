@@ -22,6 +22,14 @@ export function formatUnits(units: number, caseSize: number, unitLabel = "btl"):
   return parts.length ? parts.join(" + ") : "0";
 }
 
+// Order totals across products with different case sizes: "5 cs + 2 btl".
+export function formatCasesAndBottles(cases: number, loose: number): string {
+  const parts: string[] = [];
+  if (cases) parts.push(`${cases} cs`);
+  if (loose) parts.push(`${loose} btl`);
+  return parts.length ? parts.join(" + ") : "0 cs";
+}
+
 export interface ReorderInput {
   available: number; // bottles on hand
   incoming: number; // bottles on open purchase orders, not yet received

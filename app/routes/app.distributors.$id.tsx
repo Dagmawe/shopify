@@ -30,7 +30,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     if (distributor._count.purchaseOrders > 0) {
       return {
         error:
-          "This distributor has purchase orders, so it can't be deleted. Cancel or keep those orders instead.",
+          "This distributor has purchase orders, so it can't be deleted.",
       };
     }
     await db.distributor.delete({ where: { id: distributor.id } });
@@ -106,17 +106,30 @@ export default function EditDistributor() {
       </s-section>
 
       <s-section heading="Delete distributor">
-        <Form method="post">
-          <input type="hidden" name="intent" value="delete" />
-          <s-stack direction="block" gap="base">
-            <s-paragraph>
-              Linked products ({d._count.products}) will be unlinked, not deleted.
-            </s-paragraph>
-            <s-button type="submit" tone="critical">
-              Delete {d.name}
-            </s-button>
-          </s-stack>
-        </Form>
+        {d._count.purchaseOrders > 0 ? (
+          <s-paragraph>
+            {d.name} has {d._count.purchaseOrders} purchase{" "}
+            {d._count.purchaseOrders === 1 ? "order" : "orders"}, so it can&apos;t be deleted.
+            Keeping it keeps your order history complete.
+          </s-paragraph>
+        ) : (
+          <Form method="post">
+            <input type="hidden" name="intent" value="delete" />
+            <s-stack direction="block" gap="base">
+              {result && "error" in result && result.error && (
+                <s-banner tone="critical">{result.error}</s-banner>
+              )}
+              <s-paragraph>
+                {d._count.products > 0
+                  ? `Its ${d._count.products} linked ${d._count.products === 1 ? "product" : "products"} will be unlinked, not deleted.`
+                  : "No products are linked to it."}
+              </s-paragraph>
+              <s-button type="submit" tone="critical">
+                Delete {d.name}
+              </s-button>
+            </s-stack>
+          </Form>
+        )}
       </s-section>
     </s-page>
   );

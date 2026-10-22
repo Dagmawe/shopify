@@ -1,10 +1,11 @@
+import { useEffect, useState } from "react";
 import type { ActionFunctionArgs, HeadersFunction, LoaderFunctionArgs } from "react-router";
 import { Form, redirect, useActionData, useLoaderData, useNavigation } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import db from "../db.server";
 import { floatField, intField, requireApp } from "../lib/context.server";
 import { addReceivedStock } from "../lib/shopify-data.server";
-import { formatMoney, formatUnits, lineCost, lineOrderedUnits, toUnits } from "../lib/units";
+import { formatCasesAndBottles, formatMoney, formatUnits, lineCost, lineOrderedUnits, toUnits } from "../lib/units";
 import { poTotals, statusAfterReceiving } from "../models/purchase-orders.server";
 import { STATUS_LABEL, STATUS_TONE } from "../lib/status";
 
@@ -254,6 +255,9 @@ export default function PurchaseOrderDetail() {
   const isOpen = order.status === "ORDERED" || order.status === "PARTIAL";
   const belowMinimum = order.minOrderCases > 0 && totals.cases < order.minOrderCases;
   const loading = (intent: string) => (busyIntent === intent ? { loading: true } : {});
+  // Cancel and delete ask once before acting: "cancel" | "delete" | null.
+  const [confirming, setConfirming] = useState<"cancel" | "delete" | null>(null);
+  useEffect(() => setConfirming(null), [order.status]);
 
   return (
     <s-page heading={`Purchase order #${order.number}`}>
@@ -288,7 +292,7 @@ export default function PurchaseOrderDetail() {
           <s-stack direction="block">
             <s-text color="subdued">Total</s-text>
             <s-text>
-              {totals.cases} cs · {formatMoney(totals.cost)}
+              {formatCasesAndBottles(totals.cases, totals.loose)} · {formatMoney(totals.cost)}
             </s-text>
           </s-stack>
         </s-stack>
@@ -297,7 +301,8 @@ export default function PurchaseOrderDetail() {
 
       {belowMinimum && isDraft && (
         <s-banner tone="warning">
-          {order.distributorName} has a {order.minOrderCases}-case minimum. This order has {totals.cases}.
+          {order.distributorName} has a {order.minOrderCases}-case minimum. This order has{" "}
+          {totals.cases} full {totals.cases === 1 ? "case" : "cases"}.
         </s-banner>
       )}
 
@@ -381,7 +386,12 @@ export default function PurchaseOrderDetail() {
               <s-button href="/app/products">Go to case settings</s-button>
             </s-stack>
           ) : (
-            <Form method="post" key={order.lines.length}>
+            // Keyed on every line's quantity, so the boxes reset after each add,
+            // including when the product merges into a line that already exists.
+            <Form
+              method="post"
+              key={order.lines.map((l) => `${l.id}:${l.casesOrdered}:${l.looseOrdered}`).join(",")}
+            >
               <input type="hidden" name="intent" value="add_line" />
               <s-stack direction="inline" gap="base">
                 <s-select label="Product" name="productSettingId">
@@ -505,23 +515,41 @@ export default function PurchaseOrderDetail() {
               </s-button>
             </Form>
           )}
-          {(isDraft || isOpen) && (
-            <Form method="post">
-              <input type="hidden" name="intent" value="cancel" />
-              <s-button type="submit" tone="critical" variant="tertiary" {...loading("cancel")}>
-                Cancel order
-              </s-button>
-            </Form>
+          {(isDraft || isOpen) && confirming == null && (
+            <s-button tone="critical" variant="tertiary" onClick={() => setConfirming("cancel")}>
+              Cancel order
+            </s-button>
           )}
-          {isDraft && (
-            <Form method="post">
-              <input type="hidden" name="intent" value="delete" />
-              <s-button type="submit" tone="critical" variant="tertiary" {...loading("delete")}>
-                Delete draft
-              </s-button>
-            </Form>
+          {isDraft && confirming == null && (
+            <s-button tone="critical" variant="tertiary" onClick={() => setConfirming("delete")}>
+              Delete draft
+            </s-button>
           )}
         </s-stack>
+        {confirming && (
+          <s-banner tone="critical">
+            <s-stack direction="block" gap="base">
+              <s-text>
+                {confirming === "cancel"
+                  ? isOpen
+                    ? `Cancel purchase order #${order.number}? Stock already received stays in Shopify. Tell ${order.distributorName} separately.`
+                    : `Cancel draft #${order.number}? It stays in your order history as cancelled.`
+                  : `Delete draft #${order.number}? This can't be undone.`}
+              </s-text>
+              <s-stack direction="inline" gap="base">
+                <Form method="post">
+                  <input type="hidden" name="intent" value={confirming} />
+                  <s-button type="submit" tone="critical" variant="primary" {...loading(confirming)}>
+                    {confirming === "cancel" ? "Cancel order" : "Delete draft"}
+                  </s-button>
+                </Form>
+                <s-button onClick={() => setConfirming(null)}>
+                  {confirming === "cancel" ? "Keep order" : "Keep draft"}
+                </s-button>
+              </s-stack>
+            </s-stack>
+          </s-banner>
+        )}
         {!emailHref && (
           <s-paragraph>
             Add an order email to {order.distributorName} to send this order with one click.

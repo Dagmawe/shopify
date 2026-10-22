@@ -1,5 +1,7 @@
 import type { ActionFunctionArgs, HeadersFunction, LoaderFunctionArgs } from "react-router";
 import { Form, useActionData, useLoaderData, useNavigation } from "react-router";
+import { useEffect } from "react";
+import { useAppBridge } from "@shopify/app-bridge-react";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import db from "../db.server";
 import { intField, requireApp, textField } from "../lib/context.server";
@@ -31,7 +33,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       minOrderCases: Math.max(0, intField(form, "minOrderCases", 0)),
     },
   });
-  return { ok: true };
+  return { added: name };
 };
 
 export default function Distributors() {
@@ -39,6 +41,11 @@ export default function Distributors() {
   const result = useActionData<typeof action>();
   const nav = useNavigation();
   const saving = nav.state === "submitting";
+  const shopify = useAppBridge();
+
+  useEffect(() => {
+    if (result && "added" in result) shopify.toast.show(`Added ${result.added}`);
+  }, [result, shopify]);
 
   return (
     <s-page heading="Distributors">
