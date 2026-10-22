@@ -1,0 +1,333 @@
+/* Public pages (landing page and privacy policy). The app itself uses
+   Shopify's Polaris components and doesn't load this file. */
+
+.page {
+  --ink: #1e3b30; /* bottle-glass green */
+  --ink-soft: #4b6358;
+  --paper: #fbfbf8;
+  --cork: #c49a6c;
+  --cork-dark: #9c7445;
+  --carton: #d9c7a7; /* cardboard dividers */
+  --wine: #6e1a2a;
+  --focus: #2f6fb5;
+
+  min-height: 100vh;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Public Sans", system-ui, sans-serif;
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+.page :focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.wrap {
+  max-width: 68rem;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Header ------------------------------------------------------------------ */
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem 0;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: "Young Serif", Georgia, serif;
+  font-size: 1.35rem;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.brandMark {
+  width: 28px;
+  height: 28px;
+}
+
+.navLink {
+  color: var(--ink-soft);
+  text-decoration: none;
+  font-size: 0.95rem;
+}
+
+.navLink:hover {
+  color: var(--ink);
+  text-decoration: underline;
+}
+
+/* Hero -------------------------------------------------------------------- */
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  gap: 3.5rem;
+  align-items: center;
+  padding: 3.5rem 0 4.5rem;
+}
+
+.title {
+  font-family: "Young Serif", Georgia, serif;
+  font-weight: 400;
+  font-size: clamp(2.6rem, 6vw, 4.4rem);
+  line-height: 1.02;
+  letter-spacing: -0.015em;
+  margin: 0 0 1.4rem;
+  max-width: 12ch;
+}
+
+.lede {
+  font-size: 1.2rem;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  margin: 0 0 2rem;
+  max-width: 34rem;
+}
+
+.install {
+  margin: 0;
+  max-width: 30rem;
+  font-size: 0.98rem;
+  color: var(--ink-soft);
+}
+
+.install strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* The case ---------------------------------------------------------------- */
+
+.caseFigure {
+  margin: 0;
+  justify-self: center;
+  width: 100%;
+  max-width: 22rem;
+}
+
+.carton {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  padding: 6px;
+  background: var(--carton);
+  border-radius: 6px;
+  box-shadow: inset 0 0 0 2px #c9b48f;
+}
+
+.slot {
+  aspect-ratio: 1;
+  background: #ebdfc8;
+  border-radius: 3px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+}
+
+.slot:disabled {
+  cursor: default;
+}
+
+.cork {
+  width: 72%;
+  height: 72%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 50%, transparent 52%, rgba(0, 0, 0, 0.12) 53%, transparent 56%),
+    radial-gradient(circle at 35% 30%, #d8b386, var(--cork) 55%, var(--cork-dark));
+  box-shadow: 0 0 0 3px #2c4a3d; /* the bottle's glass lip */
+  transition: transform 160ms ease, opacity 160ms ease;
+}
+
+.slot:hover .cork {
+  transform: scale(0.94);
+}
+
+.empty {
+  width: 72%;
+  height: 72%;
+  border-radius: 50%;
+  border: 2px dashed #c4ad86;
+}
+
+.readout {
+  margin-top: 1.1rem;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.count {
+  font-family: "Young Serif", Georgia, serif;
+  font-size: 1.6rem;
+  line-height: 1.2;
+}
+
+.caseMath {
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+  text-align: right;
+}
+
+.caption {
+  margin-top: 0.6rem;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+}
+
+.reset {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: var(--wine);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Steps ------------------------------------------------------------------- */
+
+.steps {
+  border-top: 1px solid #e3ddd0;
+  padding: 3.5rem 0 4rem;
+}
+
+.sectionTitle {
+  font-family: "Young Serif", Georgia, serif;
+  font-weight: 400;
+  font-size: 1.9rem;
+  margin: 0 0 2rem;
+}
+
+.stepList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2.5rem;
+  counter-reset: step;
+}
+
+.step {
+  counter-increment: step;
+}
+
+.step::before {
+  content: counter(step);
+  display: inline-grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  border: 2px solid var(--cork);
+  color: var(--cork-dark);
+  font-family: "Young Serif", Georgia, serif;
+  margin-bottom: 0.9rem;
+}
+
+.stepTitle {
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin: 0 0 0.4rem;
+}
+
+.stepText {
+  margin: 0;
+  color: var(--ink-soft);
+  max-width: 22rem;
+}
+
+/* Footer ------------------------------------------------------------------ */
+
+.footer {
+  border-top: 1px solid #e3ddd0;
+  padding: 1.75rem 0 2.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+}
+
+.footer a {
+  color: var(--ink-soft);
+}
+
+/* Privacy policy ---------------------------------------------------------- */
+
+.doc {
+  max-width: 40rem;
+  padding: 2rem 0 4rem;
+}
+
+.doc h1 {
+  font-family: "Young Serif", Georgia, serif;
+  font-weight: 400;
+  font-size: clamp(2.2rem, 5vw, 3rem);
+  line-height: 1.1;
+  margin: 0 0 0.5rem;
+}
+
+.doc h2 {
+  font-family: "Young Serif", Georgia, serif;
+  font-weight: 400;
+  font-size: 1.4rem;
+  margin: 2.4rem 0 0.6rem;
+}
+
+.doc p,
+.doc li {
+  color: #2e4a3f;
+}
+
+.doc ul {
+  padding-left: 1.2rem;
+}
+
+.doc li {
+  margin-bottom: 0.4rem;
+}
+
+.updated {
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+  margin: 0 0 2rem;
+}
+
+/* Small screens ----------------------------------------------------------- */
+
+@media (max-width: 760px) {
+  .hero {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+    padding: 1.5rem 0 3rem;
+  }
+
+  .stepList {
+    grid-template-columns: 1fr;
+    gap: 1.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cork {
+    transition: none;
+  }
+}
