@@ -1,6 +1,10 @@
 /* Public pages (landing page and privacy policy). The app itself uses
    Shopify's Polaris components and doesn't load this file. */
 
+:global(body) {
+  margin: 0;
+}
+
 .page {
   --ink: #1e3b30; /* bottle-glass green */
   --ink-soft: #4b6358;
