@@ -1,0 +1,39 @@
+# Production app (Corkcount), hosted on Render. Deploy config changes with:
+#   npm run deploy -- --config corkcount
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "a3591aa9a35b9a74cc8a4bc972997906"
+name = "Corkcount"
+application_url = "https://corkcount.onrender.com"
+embedded = true
+
+[access_scopes]
+scopes = "read_products,read_inventory,write_inventory,read_locations"
+optional_scopes = [ ]
+use_legacy_install_flow = false
+
+[webhooks]
+api_version = "2026-10"
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/app/uninstalled"
+  topics = [ "app/uninstalled" ]
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/app/scopes_update"
+  topics = [ "app/scopes_update" ]
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/customers/data_request"
+  compliance_topics = [ "customers/data_request" ]
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/customers/redact"
+  compliance_topics = [ "customers/redact" ]
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/shop/redact"
+  compliance_topics = [ "shop/redact" ]
+
+[auth]
+redirect_urls = [ "https://corkcount.onrender.com/auth/callback" ]

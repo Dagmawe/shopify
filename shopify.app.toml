@@ -1,6 +1,6 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 # Development app (handle caseflow-3), used by `npm run dev`. Production uses
-# shopify.app.production.toml (see README).
+# shopify.app.corkcount.toml (see README).
 
 client_id = "e267a433ae92ab79be11722488ba2155"
 name = "caseflow"
