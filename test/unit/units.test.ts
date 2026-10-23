@@ -119,9 +119,23 @@ describe("line maths", () => {
 });
 
 describe("formatMoney", () => {
-  it("formats dollars", () => {
+  it("formats dollars by default", () => {
     assert.equal(formatMoney(96), "$96.00");
     assert.equal(formatMoney(3.333), "$3.33");
+  });
+  it("adds thousands separators", () => {
+    assert.equal(formatMoney(120000000), "$120,000,000.00");
+    assert.equal(formatMoney(1200.5, "USD"), "$1,200.50");
+  });
+  it("uses the store's currency", () => {
+    assert.equal(formatMoney(1200, "GBP"), "£1,200.00");
+    assert.equal(formatMoney(1200.5, "EUR"), "€1,200.50");
+    assert.equal(formatMoney(1200, "CAD"), "$1,200.00");
+    assert.equal(formatMoney(1200, "AUD"), "$1,200.00");
+    assert.equal(formatMoney(1200, "JPY"), "¥1,200", "no cents for yen");
+  });
+  it("falls back to the code for an unknown currency", () => {
+    assert.equal(formatMoney(12.5, "NOTACODE"), "12.50 NOTACODE");
   });
   it("shows a dash when unknown", () => {
     assert.equal(formatMoney(null), "—");

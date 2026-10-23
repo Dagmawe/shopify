@@ -70,7 +70,19 @@ export function lineCost(line: {
   return Math.round((line.casesOrdered * line.costPerCase + line.looseOrdered * perUnit) * 100) / 100;
 }
 
-export function formatMoney(amount: number | null | undefined): string {
+// Prices in the store's own currency, with thousands separators:
+// "$1,200.00", "£1,200.00", "€1,200.50", "¥1,200". The locale is fixed so the
+// server and the browser always produce the same text.
+export function formatMoney(amount: number | null | undefined, currency = "USD"): string {
   if (amount == null || Number.isNaN(amount)) return "—";
-  return `$${amount.toFixed(2)}`;
+  try {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency,
+      currencyDisplay: "narrowSymbol",
+    }).format(amount);
+  } catch {
+    // Unknown currency code: show the amount with the code after it.
+    return `${amount.toFixed(2)} ${currency}`;
+  }
 }

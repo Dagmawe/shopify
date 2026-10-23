@@ -11,6 +11,7 @@ export interface FakeShopifyOptions {
   stock?: Record<string, Record<string, number>>;
   subscriptions?: Array<{ name: string; status: string }>;
   appHandle?: string;
+  currencyCode?: string;
   // Items that exist but whose stock Shopify doesn't track.
   untracked?: string[];
 }
@@ -27,6 +28,7 @@ export class FakeShopify implements AdminGraphql {
   stock: Record<string, Record<string, number>>;
   subscriptions: Array<{ name: string; status: string }>;
   appHandle: string;
+  currencyCode: string;
   untracked: Set<string>;
   adjustments: RecordedAdjustment[] = [];
   attemptedKeys: string[] = [];
@@ -45,6 +47,7 @@ export class FakeShopify implements AdminGraphql {
     this.subscriptions = options.subscriptions ?? [];
     this.appHandle = options.appHandle ?? "corkcount";
     this.untracked = new Set(options.untracked ?? []);
+    this.currencyCode = options.currencyCode ?? "USD";
   }
 
   available(itemId: string, locationId: string): number {
@@ -63,6 +66,9 @@ export class FakeShopify implements AdminGraphql {
 
   private handle(name: string, v: Record<string, any>): unknown {
     switch (name) {
+      case "CorkcountShopCurrency":
+        return { data: { shop: { currencyCode: this.currencyCode } } };
+
       case "CorkcountLocations":
         return { data: { locations: { nodes: this.locations } } };
 

@@ -3,7 +3,7 @@ import type { ActionFunctionArgs, HeadersFunction, LoaderFunctionArgs } from "re
 import { Form, redirect, useActionData, useLoaderData, useNavigation } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import db from "../db.server";
-import { intField, moneyField, requireApp } from "../lib/context.server";
+import { intField, moneyField, requireApp, shopCurrency } from "../lib/context.server";
 import { formatCasesAndBottles, formatMoney, formatUnits, lineCost, lineOrderedUnits, toUnits } from "../lib/units";
 import { poTotals } from "../models/purchase-orders.server";
 import { receiveDelivery, remainingUnits } from "../models/receiving.server";
@@ -52,7 +52,7 @@ function buildEmail(order: Awaited<ReturnType<typeof findOrder>>, shop: string):
 }
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-  const { shop } = await requireApp(request);
+  const { admin, shop } = await requireApp(request);
   const order = await findOrder(shop, params.id);
 
   const addable =
@@ -97,6 +97,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     totals,
     addable,
     emailHref: buildEmail(order, shop),
+    currency: await shopCurrency(admin, shop),
   };
 };
 
@@ -218,7 +219,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 };
 
 export default function PurchaseOrderDetail() {
-  const { order, totals, addable, emailHref } = useLoaderData<typeof loader>();
+  const { order, totals, addable, emailHref, currency } = useLoaderData<typeof loader>();
   const result = useActionData<typeof action>();
   const nav = useNavigation();
   const busyIntent = nav.state === "submitting" ? String(nav.formData?.get("intent") ?? "") : "";
@@ -273,7 +274,7 @@ export default function PurchaseOrderDetail() {
           <s-stack direction="block">
             <s-text color="subdued">Total</s-text>
             <s-text>
-              {formatCasesAndBottles(totals.cases, totals.loose)} · {formatMoney(totals.cost)}
+              {formatCasesAndBottles(totals.cases, totals.loose)} · {formatMoney(totals.cost, currency)}
             </s-text>
           </s-stack>
         </s-stack>
@@ -345,7 +346,7 @@ export default function PurchaseOrderDetail() {
                             defaultValue={l.costPerCase == null ? "" : String(l.costPerCase)}
                           />
                         </s-table-cell>
-                        <s-table-cell>{formatMoney(l.cost)}</s-table-cell>
+                        <s-table-cell>{formatMoney(l.cost, currency)}</s-table-cell>
                       </s-table-row>
                     ))}
                   </s-table-body>

@@ -1,12 +1,23 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { addReceivedStock, getAvailable, getLocations } from "../../app/lib/shopify-data.server";
+import {
+  addReceivedStock,
+  getAvailable,
+  getLocations,
+  getShopCurrency,
+} from "../../app/lib/shopify-data.server";
 import { FakeShopify } from "../support/fake-shopify";
 
 const MAIN = "gid://shopify/Location/1";
 const WAREHOUSE = "gid://shopify/Location/2";
 const RED = "gid://shopify/InventoryItem/100";
 const WHITE = "gid://shopify/InventoryItem/200";
+
+describe("getShopCurrency", () => {
+  it("reads the store's currency", async () => {
+    assert.equal(await getShopCurrency(new FakeShopify({ currencyCode: "GBP" })), "GBP");
+  });
+});
 
 describe("getLocations", () => {
   it("lists the store's locations", async () => {

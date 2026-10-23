@@ -23,6 +23,21 @@ async function gql<T>(
 }
 
 // ---------------------------------------------------------------------------
+// Store currency
+// ---------------------------------------------------------------------------
+
+export async function getShopCurrency(admin: AdminGraphql): Promise<string> {
+  const data = await gql<{ shop: { currencyCode: string } }>(
+    admin,
+    `#graphql
+    query CorkcountShopCurrency {
+      shop { currencyCode }
+    }`,
+  );
+  return data.shop.currencyCode || "USD";
+}
+
+// ---------------------------------------------------------------------------
 // Locations
 // ---------------------------------------------------------------------------
 

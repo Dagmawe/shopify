@@ -2,7 +2,7 @@ import type { ActionFunctionArgs, HeadersFunction, LoaderFunctionArgs } from "re
 import { Form, redirect, useActionData, useLoaderData, useNavigation } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import db from "../db.server";
-import { requireApp } from "../lib/context.server";
+import { requireApp, shopCurrency } from "../lib/context.server";
 import { getAppHandle, planSelectionUrl } from "../lib/plan.server";
 import { getAvailable, getLocations } from "../lib/shopify-data.server";
 import { formatMoney, formatUnits } from "../lib/units";
@@ -32,6 +32,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     ),
     canAutoDraft: plan.autoDraftOrders,
     upgradeUrl: planSelectionUrl(shop, await getAppHandle(admin)),
+    currency: await shopCurrency(admin, shop),
   };
 };
 
@@ -121,7 +122,7 @@ async function busiestLocation(
 }
 
 export default function Reorder() {
-  const { groups, canAutoDraft, upgradeUrl } = useLoaderData<typeof loader>();
+  const { groups, canAutoDraft, upgradeUrl, currency } = useLoaderData<typeof loader>();
   const result = useActionData<typeof action>();
   const saving = useNavigation().state === "submitting";
   const linkedGroups = groups.filter(
@@ -228,7 +229,7 @@ export default function Reorder() {
                 {g.distributorId != null && toOrder.length > 0 && (
                   <s-stack direction="inline" gap="base">
                     <s-text>
-                      {cases} cases{costKnown ? ` · about ${formatMoney(cost)}` : ""}
+                      {cases} cases{costKnown ? ` · about ${formatMoney(cost, currency)}` : ""}
                     </s-text>
                     {canAutoDraft ? (
                       <Form method="post">

@@ -2,7 +2,7 @@ import type { HeadersFunction, LoaderFunctionArgs } from "react-router";
 import { useLoaderData } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import db from "../db.server";
-import { requireApp } from "../lib/context.server";
+import { requireApp, shopCurrency } from "../lib/context.server";
 import { formatCasesAndBottles, formatMoney } from "../lib/units";
 import { poTotals } from "../models/purchase-orders.server";
 import { STATUS_LABEL, STATUS_TONE } from "../lib/status";
@@ -10,7 +10,7 @@ import { STATUS_LABEL, STATUS_TONE } from "../lib/status";
 const LIST_LIMIT = 200;
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const { shop } = await requireApp(request);
+  const { admin, shop } = await requireApp(request);
   const url = new URL(request.url);
   const show = url.searchParams.get("show") === "all" ? "all" : "open";
 
@@ -27,6 +27,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const anyOrders = orders.length > 0 || (await db.purchaseOrder.count({ where: { shop } })) > 0;
 
   return {
+    currency: await shopCurrency(admin, shop),
     show,
     anyOrders,
     truncated: orders.length === LIST_LIMIT,
@@ -47,7 +48,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export default function PurchaseOrders() {
-  const { orders, show, anyOrders, truncated } = useLoaderData<typeof loader>();
+  const { orders, show, anyOrders, truncated, currency } = useLoaderData<typeof loader>();
 
   return (
     <s-page heading="Purchase orders">
@@ -102,7 +103,7 @@ export default function PurchaseOrders() {
                     </s-badge>
                   </s-table-cell>
                   <s-table-cell>{o.quantity}</s-table-cell>
-                  <s-table-cell>{formatMoney(o.cost)}</s-table-cell>
+                  <s-table-cell>{formatMoney(o.cost, currency)}</s-table-cell>
                   <s-table-cell>{o.expectedAt ? `Due ${o.expectedAt}` : "No delivery date"}</s-table-cell>
                 </s-table-row>
               ))}

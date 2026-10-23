@@ -1,4 +1,5 @@
 import { authenticate } from "../shopify.server";
+import { getShopCurrency, type AdminGraphql } from "./shopify-data.server";
 import {
   getActivePlan,
   getAppHandle,
@@ -46,6 +47,25 @@ async function requireAppInner(request: Request) {
 
 export function clearPlanCache(shop: string) {
   planCache.delete(shop);
+  currencyCache.delete(shop);
+}
+
+// The store's currency rarely changes, so it's looked up once an hour. If
+// Shopify can't be reached, prices fall back to US dollars for that page.
+const currencyCache = new Map<string, { code: string; expires: number }>();
+const CURRENCY_CACHE_MS = 60 * 60 * 1000;
+
+export async function shopCurrency(admin: AdminGraphql, shop: string): Promise<string> {
+  const cached = currencyCache.get(shop);
+  if (cached && cached.expires > Date.now()) return cached.code;
+  try {
+    const code = await getShopCurrency(admin);
+    currencyCache.set(shop, { code, expires: Date.now() + CURRENCY_CACHE_MS });
+    return code;
+  } catch (err) {
+    console.warn(`[Corkcount] Couldn't read ${shop}'s currency`, err);
+    return "USD";
+  }
 }
 
 // Form helpers live in ./form (no server imports, so they can be tested).
