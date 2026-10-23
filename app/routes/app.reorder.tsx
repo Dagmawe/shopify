@@ -153,7 +153,8 @@ export default function Reorder() {
 
       {!canAutoDraft && groups.length > 0 && (
         <s-banner tone="info" heading="Turn these into orders in one click">
-          The Pro plan creates a draft purchase order for each distributor from this list.{" "}
+          One-click draft orders are included in the Pro plan. On Starter, create orders with New
+          purchase order.{" "}
           <s-link href={upgradeUrl} target="_top">
             See plans
           </s-link>
@@ -241,7 +242,11 @@ export default function Reorder() {
                         </s-button>
                       </Form>
                     ) : (
-                      <s-button href="/app/purchase-orders/new">New purchase order</s-button>
+                      <>
+                        <s-button disabled>Create draft order</s-button>
+                        <s-text color="subdued">Pro plan</s-text>
+                        <s-button href="/app/purchase-orders/new">New purchase order</s-button>
+                      </>
                     )}
                   </s-stack>
                 )}

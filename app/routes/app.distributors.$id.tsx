@@ -1,5 +1,5 @@
 import type { ActionFunctionArgs, HeadersFunction, LoaderFunctionArgs } from "react-router";
-import { Form, redirect, useActionData, useLoaderData, useNavigation } from "react-router";
+import { Form, redirect, useActionData, useLoaderData } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import db from "../db.server";
 import { intField, requireApp, textField } from "../lib/context.server";
@@ -38,7 +38,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   }
 
   const name = textField(form, "name");
-  if (!name) return { error: "Give the distributor a name." };
+  if (!name) return { nameError: "Give the distributor a name." };
   await db.distributor.update({
     where: { id: distributor.id },
     data: {
@@ -57,7 +57,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 export default function EditDistributor() {
   const { distributor: d } = useLoaderData<typeof loader>();
   const result = useActionData<typeof action>();
-  const saving = useNavigation().state === "submitting";
 
   return (
     <s-page heading={d.name}>
@@ -65,10 +64,16 @@ export default function EditDistributor() {
         Distributors
       </s-link>
       <s-section>
-        <Form method="post">
+        {/* data-save-bar shows Shopify's Save / Discard bar as soon as a field changes. */}
+        <Form method="post" data-save-bar data-discard-confirmation>
           <s-stack direction="block" gap="base">
-            {result && "error" in result && <s-banner tone="critical">{result.error}</s-banner>}
-            <s-text-field label="Name" name="name" defaultValue={d.name} required />
+            <s-text-field
+              label="Name"
+              name="name"
+              defaultValue={d.name}
+              required
+              {...(result && "nameError" in result ? { error: result.nameError } : {})}
+            />
             <s-stack direction="inline" gap="base">
               <s-text-field label="Sales rep" name="repName" defaultValue={d.repName ?? ""} />
               <s-email-field label="Order email" name="email" defaultValue={d.email ?? ""} />
@@ -96,11 +101,6 @@ export default function EditDistributor() {
               defaultValue={d.notes ?? ""}
               details="Delivery days, account number, anything your staff should know"
             />
-            <s-stack direction="inline" gap="base">
-              <s-button type="submit" variant="primary" {...(saving ? { loading: true } : {})}>
-                Save
-              </s-button>
-            </s-stack>
           </s-stack>
         </Form>
       </s-section>

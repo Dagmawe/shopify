@@ -20,7 +20,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const { shop } = await requireApp(request);
   const form = await request.formData();
   const name = textField(form, "name");
-  if (!name) return { error: "Give the distributor a name." };
+  if (!name) return { nameError: "Give the distributor a name." };
 
   await db.distributor.create({
     data: {
@@ -88,10 +88,12 @@ export default function Distributors() {
       <s-section heading="Add a distributor">
         <Form method="post" key={distributors.length}>
           <s-stack direction="block" gap="base">
-            {result && "error" in result && (
-              <s-banner tone="critical">{result.error}</s-banner>
-            )}
-            <s-text-field label="Name" name="name" required />
+            <s-text-field
+              label="Name"
+              name="name"
+              required
+              {...(result && "nameError" in result ? { error: result.nameError } : {})}
+            />
             <s-stack direction="inline" gap="base">
               <s-text-field label="Sales rep" name="repName" />
               <s-email-field label="Order email" name="email" />

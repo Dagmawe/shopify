@@ -9,6 +9,9 @@ import { formatCasesAndBottles, formatMoney, formatUnits, lineCost, lineOrderedU
 import { poTotals, statusAfterReceiving } from "../models/purchase-orders.server";
 import { STATUS_LABEL, STATUS_TONE } from "../lib/status";
 
+const KNOWN_INTENTS = ["add_line", "update_lines", "remove_line", "receive", "mark_ordered", "cancel", "delete", "receive_all"];
+const QTY_ERROR = "Enter at least one case or bottle.";
+
 async function findOrder(shop: string, idParam: string | undefined) {
   const id = Number.parseInt(idParam ?? "", 10);
   if (!Number.isFinite(id)) throw new Response("Not found", { status: 404 });
@@ -108,14 +111,14 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
   switch (intent) {
     case "add_line": {
-      if (!isDraft) return { error: "Only draft orders can be changed." };
+      if (!isDraft) return { intent, error: "Only draft orders can be changed." };
       const setting = await db.productSetting.findFirst({
         where: { id: intField(form, "productSettingId", 0), shop },
       });
-      if (!setting) return { error: "Choose a product to add." };
+      if (!setting) return { intent, error: "Choose a product to add." };
       const cases = Math.max(0, intField(form, "cases", 0));
       const loose = Math.max(0, intField(form, "loose", 0));
-      if (cases + loose === 0) return { error: "Enter at least one case or bottle." };
+      if (cases + loose === 0) return { intent, error: QTY_ERROR };
       const existing = order.lines.find((l) => l.variantId === setting.variantId);
       if (existing) {
         await db.purchaseOrderLine.update({
@@ -141,7 +144,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     }
 
     case "update_lines": {
-      if (!isDraft) return { error: "Only draft orders can be changed." };
+      if (!isDraft) return { intent, error: "Only draft orders can be changed." };
       for (const line of order.lines) {
         const cases = Math.max(0, intField(form, `cases_${line.id}`, line.casesOrdered));
         const loose = Math.max(0, intField(form, `loose_${line.id}`, line.looseOrdered));
@@ -159,7 +162,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     }
 
     case "remove_line": {
-      if (!isDraft) return { error: "Only draft orders can be changed." };
+      if (!isDraft) return { intent, error: "Only draft orders can be changed." };
       const lineId = intField(form, "lineId", 0);
       if (order.lines.some((l) => l.id === lineId)) {
         await db.purchaseOrderLine.delete({ where: { id: lineId } });
@@ -168,8 +171,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     }
 
     case "mark_ordered": {
-      if (!isDraft) return { error: "This order has already been placed." };
-      if (order.lines.length === 0) return { error: "Add at least one product first." };
+      if (!isDraft) return { intent, error: "This order has already been placed." };
+      if (order.lines.length === 0) return { intent, error: "Add at least one product first." };
       await db.purchaseOrder.update({
         where: { id: order.id },
         data: { status: "ORDERED", orderedAt: new Date() },
@@ -179,8 +182,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
     case "receive":
     case "receive_all": {
-      if (!isOpen) return { error: "Only placed orders can be received." };
-      if (!order.locationId) return { error: "This order has no delivery location." };
+      if (!isOpen) return { intent, error: "Only placed orders can be received." };
+      if (!order.locationId) return { intent, error: "This order has no delivery location." };
 
       const deltas = order.lines.map((line) => {
         const remaining = Math.max(0, lineOrderedUnits(line) - line.unitsReceived);
@@ -195,7 +198,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         return { line, units };
       });
       const changes = deltas.filter((d) => d.units > 0);
-      if (!changes.length) return { error: "Enter what arrived before receiving." };
+      if (!changes.length) return { intent, error: "Enter what arrived before receiving." };
 
       try {
         await addReceivedStock(admin, {
@@ -232,18 +235,18 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     }
 
     case "cancel": {
-      if (!isDraft && !isOpen) return { error: "This order can't be cancelled." };
+      if (!isDraft && !isOpen) return { intent, error: "This order can't be cancelled." };
       await db.purchaseOrder.update({ where: { id: order.id }, data: { status: "CANCELLED" } });
       return redirect(here);
     }
 
     case "delete": {
-      if (!isDraft) return { error: "Only drafts can be deleted. Cancel placed orders instead." };
+      if (!isDraft) return { intent, error: "Only drafts can be deleted. Cancel placed orders instead." };
       await db.purchaseOrder.delete({ where: { id: order.id } });
       return redirect("/app/purchase-orders");
     }
   }
-  return { error: "Unknown action." };
+  return { intent, error: "Something went wrong. Reload the page and try again." };
 };
 
 export default function PurchaseOrderDetail() {
@@ -255,6 +258,13 @@ export default function PurchaseOrderDetail() {
   const isOpen = order.status === "ORDERED" || order.status === "PARTIAL";
   const belowMinimum = order.minOrderCases > 0 && totals.cases < order.minOrderCases;
   const loading = (intent: string) => (busyIntent === intent ? { loading: true } : {});
+  // Errors show next to the part of the page they came from.
+  const errorFor = (...intents: string[]) =>
+    result && "error" in result && result.error && intents.includes(result.intent)
+      ? result.error
+      : null;
+  const addError = errorFor("add_line");
+  const actionsError = errorFor("mark_ordered", "cancel", "delete", "receive_all");
   // Cancel and delete ask once before acting: "cancel" | "delete" | null.
   const [confirming, setConfirming] = useState<"cancel" | "delete" | null>(null);
   useEffect(() => setConfirming(null), [order.status]);
@@ -265,7 +275,7 @@ export default function PurchaseOrderDetail() {
         Purchase orders
       </s-link>
 
-      {result && "error" in result && result.error && (
+      {result && "error" in result && result.error && !KNOWN_INTENTS.includes(result.intent) && (
         <s-banner tone="critical">{result.error}</s-banner>
       )}
 
@@ -312,9 +322,13 @@ export default function PurchaseOrderDetail() {
           {order.lines.length === 0 ? (
             <s-paragraph>No products yet. Add some below.</s-paragraph>
           ) : (
-            <Form method="post">
+            // data-save-bar shows Shopify's Save / Discard bar when a quantity changes.
+            <Form method="post" data-save-bar data-discard-confirmation>
               <input type="hidden" name="intent" value="update_lines" />
               <s-stack direction="block" gap="base">
+                {errorFor("update_lines", "remove_line") && (
+                  <s-banner tone="critical">{errorFor("update_lines", "remove_line")}</s-banner>
+                )}
                 <s-table>
                   <s-table-header-row>
                     <s-table-header listSlot="primary">Product</s-table-header>
@@ -365,10 +379,10 @@ export default function PurchaseOrderDetail() {
                     ))}
                   </s-table-body>
                 </s-table>
-                <s-text color="subdued">Set both quantities to 0 to remove a product.</s-text>
-                <s-button type="submit" {...loading("update_lines")}>
-                  Save quantities
-                </s-button>
+                <s-text color="subdued">
+                  Change a quantity, then save it from the bar at the top. Set both quantities to 0
+                  to remove a product.
+                </s-text>
               </s-stack>
             </Form>
           )}
@@ -393,6 +407,9 @@ export default function PurchaseOrderDetail() {
               key={order.lines.map((l) => `${l.id}:${l.casesOrdered}:${l.looseOrdered}`).join(",")}
             >
               <input type="hidden" name="intent" value="add_line" />
+              {addError && addError !== QTY_ERROR && (
+                <s-banner tone="critical">{addError}</s-banner>
+              )}
               <s-stack direction="inline" gap="base">
                 <s-select label="Product" name="productSettingId">
                   {addable.map((p) => (
@@ -401,7 +418,13 @@ export default function PurchaseOrderDetail() {
                     </s-option>
                   ))}
                 </s-select>
-                <s-number-field label="Cases" name="cases" defaultValue="1" min={0} />
+                <s-number-field
+                  label="Cases"
+                  name="cases"
+                  defaultValue="1"
+                  min={0}
+                  {...(addError === QTY_ERROR ? { error: QTY_ERROR } : {})}
+                />
                 <s-number-field label="Extra bottles" name="loose" defaultValue="0" min={0} />
                 <s-button type="submit" {...loading("add_line")}>
                   Add
@@ -420,6 +443,7 @@ export default function PurchaseOrderDetail() {
           <Form method="post" key={order.lines.map((l) => l.received).join("-")}>
             <input type="hidden" name="intent" value="receive" />
             <s-stack direction="block" gap="base">
+              {errorFor("receive") && <s-banner tone="critical">{errorFor("receive")}</s-banner>}
               {isOpen && (
                 <s-paragraph>
                   Count what arrived and enter it below. Corkcount converts cases to bottles and adds
@@ -493,6 +517,7 @@ export default function PurchaseOrderDetail() {
 
       {/* ---------------- Actions ---------------- */}
       <s-section heading="Actions">
+        {actionsError && <s-banner tone="critical">{actionsError}</s-banner>}
         <s-stack direction="inline" gap="base">
           {isDraft && (
             <Form method="post">

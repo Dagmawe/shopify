@@ -1,5 +1,5 @@
 import type { ActionFunctionArgs, HeadersFunction, LoaderFunctionArgs } from "react-router";
-import { Form, useActionData, useLoaderData, useNavigation } from "react-router";
+import { Form, useActionData, useLoaderData } from "react-router";
 import { useEffect } from "react";
 import { useAppBridge } from "@shopify/app-bridge-react";
 import { boundary } from "@shopify/shopify-app-react-router/server";
@@ -78,7 +78,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 export default function CaseSettings() {
   const { rows, distributors, q, endCursor, hasNextPage } = useLoaderData<typeof loader>();
   const result = useActionData<typeof action>();
-  const saving = useNavigation().state === "submitting";
   const shopify = useAppBridge();
 
   useEffect(() => {
@@ -112,7 +111,8 @@ export default function CaseSettings() {
         {rows.length === 0 ? (
           <s-paragraph>No products found.</s-paragraph>
         ) : (
-          <Form method="post">
+          // data-save-bar shows Shopify's Save / Discard bar as soon as a field changes.
+          <Form method="post" data-save-bar data-discard-confirmation>
             <input type="hidden" name="rowCount" value={rows.length} />
             <s-stack direction="block" gap="base">
               <s-table>
@@ -201,9 +201,6 @@ export default function CaseSettings() {
                 </s-table-body>
               </s-table>
               <s-stack direction="inline" gap="base">
-                <s-button type="submit" variant="primary" {...(saving ? { loading: true } : {})}>
-                  Save changes
-                </s-button>
                 {hasNextPage && endCursor && (
                   <s-button
                     href={`/app/products?${new URLSearchParams({ q, after: endCursor }).toString()}`}
