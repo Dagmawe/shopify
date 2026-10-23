@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { ActionFunctionArgs, HeadersFunction, LoaderFunctionArgs } from "react-router";
 import { Form, redirect, useActionData, useLoaderData, useNavigation } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
@@ -233,9 +233,12 @@ export default function PurchaseOrderDetail() {
       : null;
   const addError = errorFor("add_line");
   const actionsError = errorFor("mark_ordered", "cancel", "delete", "receive_all");
-  // Cancel and delete ask once before acting: "cancel" | "delete" | null.
-  const [confirming, setConfirming] = useState<"cancel" | "delete" | null>(null);
-  useEffect(() => setConfirming(null), [order.status]);
+  // Cancel and delete ask once before acting. The question is tied to the
+  // order's status, so it disappears by itself once the order changes.
+  const [asked, setAsked] = useState<{ kind: "cancel" | "delete"; status: string } | null>(null);
+  const confirming = asked && asked.status === order.status ? asked.kind : null;
+  const setConfirming = (kind: "cancel" | "delete" | null) =>
+    setAsked(kind ? { kind, status: order.status } : null);
 
   return (
     <s-page heading={`Purchase order #${order.number}`}>
