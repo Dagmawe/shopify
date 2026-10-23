@@ -36,7 +36,7 @@ export function SitePage({ children }: { children: ReactNode }) {
         </header>
         {children}
         <footer className={styles.footer}>
-          <span>Corkcount is an app for Shopify stores, made by CartCraft Labs.</span>
+          <span>Corkcount is an app for Shopify stores, made by Dagmawe Legesse.</span>
           <a href="/privacy">Privacy policy</a>
         </footer>
       </div>

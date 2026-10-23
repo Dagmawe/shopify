@@ -33,10 +33,10 @@ export default function Privacy() {
     <SitePage>
       <main className={styles.doc}>
         <h1>Privacy policy</h1>
-        <p className={styles.updated}>Last updated October 22, 2026</p>
+        <p className={styles.updated}>Last updated October 23, 2026</p>
 
         <p>
-          Corkcount is a Shopify app made by CartCraft Labs (&quot;we&quot;). It helps wine
+          Corkcount is a Shopify app made by Dagmawe Legesse (&quot;we&quot;), an independent developer. It helps wine
           and liquor stores order from distributors, receive deliveries and reorder stock.
           This policy explains what information Corkcount handles for the stores that
           install it (&quot;merchants&quot;).
