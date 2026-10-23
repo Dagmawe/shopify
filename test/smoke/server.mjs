@@ -5,15 +5,42 @@
 
 import { spawn } from "node:child_process";
 import { createHmac, randomUUID } from "node:crypto";
+import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
+import { dirname, join } from "node:path";
 import assert from "node:assert/strict";
 import { PrismaClient } from "@prisma/client";
+
+// On GitHub, "::error ::" lines become annotations on the run.
+const onGitHub = Boolean(process.env.GITHUB_ACTIONS);
+const annotate = (level, title, message) =>
+  onGitHub && console.log(`::${level} title=${title}::${message.replace(/\n/g, "%0A")}`);
+
+// Give up after two minutes rather than hanging the CI job.
+setTimeout(() => {
+  annotate("error", "Smoke test", "Timed out after 2 minutes.");
+  console.error("Smoke test timed out.\n" + serverLog);
+  stopServer();
+  process.exit(1);
+}, 120_000).unref();
+
+// Run react-router-serve with node directly (not through npx), in its own
+// process group, so stopping it stops the real server too.
+const require = createRequire(import.meta.url);
+const servePkgPath = require.resolve("@react-router/serve/package.json");
+const servePkg = JSON.parse(readFileSync(servePkgPath, "utf8"));
+const serveBin = join(
+  dirname(servePkgPath),
+  typeof servePkg.bin === "string" ? servePkg.bin : servePkg.bin["react-router-serve"],
+);
 
 const PORT = process.env.SMOKE_PORT || "3123";
 const BASE = `http://localhost:${PORT}`;
 const SECRET = "smoke-test-secret";
 const SHOP = "smoke-test.myshopify.com";
 
-const server = spawn("npx", ["react-router-serve", "./build/server/index.js"], {
+const server = spawn(process.execPath, [serveBin, "./build/server/index.js"], {
+  detached: true,
   env: {
     ...process.env,
     NODE_ENV: "production",
@@ -26,6 +53,13 @@ const server = spawn("npx", ["react-router-serve", "./build/server/index.js"], {
   stdio: ["ignore", "pipe", "pipe"],
 });
 let serverLog = "";
+function stopServer() {
+  try {
+    process.kill(-server.pid, "SIGTERM");
+  } catch {
+    // already stopped
+  }
+}
 server.stdout.on("data", (d) => (serverLog += d));
 server.stderr.on("data", (d) => (serverLog += d));
 
@@ -40,6 +74,7 @@ async function check(name, fn) {
   } catch (err) {
     results.push({ name, ok: false });
     console.log(`  ✗ ${name}\n    ${err.message.split("\n").join("\n    ")}`);
+    annotate("error", `Smoke: ${name}`, err.message);
   }
 }
 
@@ -187,9 +222,10 @@ try {
   });
 } catch (err) {
   console.error(err);
+  annotate("error", "Smoke test", err.message);
   results.push({ name: "startup", ok: false });
 } finally {
-  server.kill();
+  stopServer();
   await db.$disconnect();
 }
 
@@ -197,5 +233,8 @@ const failed = results.filter((r) => !r.ok);
 console.log(`\n${results.length - failed.length} passed, ${failed.length} failed`);
 if (failed.length) {
   console.log("\nServer output:\n" + serverLog);
+  annotate("error", "Smoke test server output", serverLog.slice(-3000));
   process.exit(1);
 }
+annotate("notice", "Smoke test", `${results.length} checks passed`);
+process.exit(0);

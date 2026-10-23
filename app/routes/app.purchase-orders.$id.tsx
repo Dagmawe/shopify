@@ -363,7 +363,7 @@ export default function PurchaseOrderDetail() {
             <s-stack direction="block" gap="base">
               <s-paragraph>
                 No products are linked to {order.distributorName} yet. Link them on the Case
-                settings page and they'll show up here.
+                settings page and they&apos;ll show up here.
               </s-paragraph>
               <s-button href="/app/products">Go to case settings</s-button>
             </s-stack>

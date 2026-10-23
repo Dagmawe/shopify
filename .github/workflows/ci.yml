@@ -61,6 +61,7 @@ jobs:
 
       - name: Smoke test the built server
         if: ${{ !cancelled() }}
+        timeout-minutes: 4
         run: npm run test:smoke
 
   docker:
