@@ -41,20 +41,26 @@ jobs:
       - name: Type check
         run: npm run typecheck
 
+      # Later steps run even if an earlier check fails, so one run reports
+      # every problem. The job still fails if any step fails.
       - name: Lint
         # "compact" output lets GitHub show each problem on the file and line.
         run: npm run lint -- --format compact
 
       - name: Create test database
+        if: ${{ !cancelled() }}
         run: npx prisma migrate deploy
 
       - name: Unit and database tests
+        if: ${{ !cancelled() }}
         run: npm test
 
       - name: Build
+        if: ${{ !cancelled() }}
         run: npm run build
 
       - name: Smoke test the built server
+        if: ${{ !cancelled() }}
         run: npm run test:smoke
 
   docker:
