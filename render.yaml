@@ -9,7 +9,9 @@ services:
     region: ohio
     dockerfilePath: ./Dockerfile
     healthCheckPath: /healthz
-    autoDeployTrigger: commit
+    # Deploy a new commit on main only after GitHub's CI checks pass
+    # (.github/workflows/ci.yml). A failing commit is never deployed.
+    autoDeployTrigger: checksPass
     disk:
       name: data
       mountPath: /var/data

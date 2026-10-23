@@ -159,14 +159,34 @@ app/
   lib/shopify-data.server.ts   Every Shopify API call (products, stock, locations)
   lib/plan.server.ts           Which plan a store is on and what it unlocks
   lib/context.server.ts        Sign-in + plan check every page runs first
-  models/                      Purchase order and reorder logic
+  models/                      Purchase orders, reorder suggestions, receiving
   routes/app.*.tsx             The pages (one file per page)
   routes/webhooks.*.tsx        Messages Shopify sends the app
 prisma/schema.prisma           Database tables
-shopify.app.toml               App permissions and webhooks
+shopify.app.toml               App permissions and webhooks (dev app)
+shopify.app.corkcount.toml     The same for the live app
+test/unit/                     Automated tests (case maths, plans, orders, receiving)
+test/smoke/server.mjs          Starts the built app and checks pages and webhooks
+.github/workflows/ci.yml       Runs all checks on GitHub
 ```
 
-`docs/TEMPLATE_README.md` is Shopify's original template guide, with troubleshooting for common setup errors.
+## Tests and deploys
+
+Every pull request and every push to `main` runs these checks on GitHub (the **CI** workflow):
+
+1. Type check and lint
+2. Unit and database tests (`npm test`): case maths, reorder suggestions, plans, purchase orders, and receiving, including a delivery submitted twice
+3. Build, then a smoke test (`npm run test:smoke`) that starts the real server and checks the pages, the login rule, and all five webhooks with real and forged Shopify signatures
+4. The production Docker image builds
+
+Render deploys a commit on `main` only after all of them pass (`autoDeployTrigger: checksPass` in `render.yaml`). To run the tests on your computer:
+
+```bash
+npx prisma migrate deploy   # once, creates the local database
+npm test
+```
+
+Work on a branch, open a pull request, and merge it when CI is green.
 
 ## Ideas for later versions
 

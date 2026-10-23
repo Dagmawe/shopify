@@ -1,6 +1,6 @@
 // All calls to Shopify's Admin GraphQL API live here, so the pages stay simple.
 
-import { randomUUID } from "node:crypto";
+import { createHash } from "node:crypto";
 
 export interface AdminGraphql {
   graphql: (
@@ -224,13 +224,16 @@ async function hasLevelAt(
 }
 
 // Adds received stock to Shopify. Uses compare-and-set (changeFromQuantity)
-// so a sale that happens at the same moment can't be overwritten, and an
-// idempotency key so a retried request can't double-count a delivery.
+// so a sale that happens at the same moment can't be overwritten. The
+// idempotency key is the caller's delivery key plus the stock we just read:
+// a repeat of the identical request counts once, while a retry after a sale
+// changed the stock gets a fresh key instead of Shopify's cached refusal.
 export async function addReceivedStock(
   admin: AdminGraphql,
   params: {
     locationId: string;
     reference: string;
+    idempotencyKey: string;
     changes: Array<{ inventoryItemId: string; delta: number }>;
   },
 ): Promise<void> {
@@ -261,7 +264,10 @@ export async function addReceivedStock(
       }
     }`,
     {
-      idempotencyKey: randomUUID(),
+      idempotencyKey: `${params.idempotencyKey}:${createHash("sha256")
+        .update(changes.map((c) => `${c.inventoryItemId}=${current.get(c.inventoryItemId) ?? 0}`).join(","))
+        .digest("hex")
+        .slice(0, 16)}`,
       input: {
         reason: "received",
         name: "available",

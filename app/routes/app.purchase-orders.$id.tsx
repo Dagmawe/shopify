@@ -4,9 +4,9 @@ import { Form, redirect, useActionData, useLoaderData, useNavigation } from "rea
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import db from "../db.server";
 import { floatField, intField, requireApp } from "../lib/context.server";
-import { addReceivedStock } from "../lib/shopify-data.server";
 import { formatCasesAndBottles, formatMoney, formatUnits, lineCost, lineOrderedUnits, toUnits } from "../lib/units";
-import { poTotals, statusAfterReceiving } from "../models/purchase-orders.server";
+import { poTotals } from "../models/purchase-orders.server";
+import { receiveDelivery, remainingUnits } from "../models/receiving.server";
 import { STATUS_LABEL, STATUS_TONE } from "../lib/status";
 
 const KNOWN_INTENTS = ["add_line", "update_lines", "remove_line", "receive", "mark_ordered", "cancel", "delete", "receive_all"];
@@ -183,54 +183,22 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     case "receive":
     case "receive_all": {
       if (!isOpen) return { intent, error: "Only placed orders can be received." };
-      if (!order.locationId) return { intent, error: "This order has no delivery location." };
 
-      const deltas = order.lines.map((line) => {
-        const remaining = Math.max(0, lineOrderedUnits(line) - line.unitsReceived);
-        const units =
+      const units = new Map<number, number>();
+      for (const line of order.lines) {
+        units.set(
+          line.id,
           intent === "receive_all"
-            ? remaining
+            ? remainingUnits(line)
             : toUnits(
                 intField(form, `recvCases_${line.id}`, 0),
                 intField(form, `recvLoose_${line.id}`, 0),
                 line.caseSize,
-              );
-        return { line, units };
-      });
-      const changes = deltas.filter((d) => d.units > 0);
-      if (!changes.length) return { intent, error: "Enter what arrived before receiving." };
-
-      try {
-        await addReceivedStock(admin, {
-          locationId: order.locationId,
-          reference: `corkcount://purchase-order/${order.number}`,
-          changes: changes.map((d) => ({ inventoryItemId: d.line.inventoryItemId, delta: d.units })),
-        });
-      } catch (err) {
-        return {
-          error: `Shopify didn't accept the stock update, so nothing was changed. ${
-            err instanceof Error ? err.message : ""
-          }`,
-        };
+              ),
+        );
       }
-
-      const updated = order.lines.map((line) => {
-        const add = changes.find((d) => d.line.id === line.id)?.units ?? 0;
-        return { ...line, unitsReceived: line.unitsReceived + add };
-      });
-      const status = statusAfterReceiving(updated);
-      await db.$transaction([
-        ...changes.map((d) =>
-          db.purchaseOrderLine.update({
-            where: { id: d.line.id },
-            data: { unitsReceived: { increment: d.units } },
-          }),
-        ),
-        db.purchaseOrder.update({
-          where: { id: order.id },
-          data: { status, receivedAt: status === "RECEIVED" ? new Date() : null },
-        }),
-      ]);
+      const received = await receiveDelivery(admin, order, units);
+      if (!received.ok) return { intent, error: received.error };
       return redirect(here);
     }
 

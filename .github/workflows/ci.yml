@@ -1,39 +1,68 @@
-on: [push, pull_request]
-
+# Runs on every pull request and every push to main. Render deploys a commit
+# on main only after these checks pass (autoDeployTrigger: checksPass in
+# render.yaml), so a change that breaks them never reaches merchants.
 name: CI
 
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 jobs:
-  CI:
-    name: Node ${{ matrix.node }} and ${{ matrix.manager }}
+  checks:
+    name: Type check, lint, test, build
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node: [22, 24]
-        manager: ['npm', 'yarn', 'pnpm']
+    timeout-minutes: 15
+    env:
+      # SQLite file for the tests, created by `prisma migrate deploy` below.
+      DATABASE_URL: file:./test.sqlite
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
       - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
-          node-version: ${{ matrix.node }}
+          node-version: 22
+          cache: npm
 
-      - name: Install pnpm
-        if: ${{ matrix.manager == 'pnpm' }}
-        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
-        with:
-          version: 8
+      - name: Install dependencies
+        run: npm ci
 
-      - name: Install dependencies using ${{ matrix.manager }}
-        run: ${{ matrix.manager }} install
+      - name: Generate Prisma client
+        run: npx prisma generate
 
-      - name: Run TypeScript type checking
-        if: ${{ !startsWith(github.head_ref || github.ref_name, 'javascript') }}
-        run: npx tsc --noEmit
+      - name: Type check
+        run: npm run typecheck
 
-      - name: Run ESLint
+      - name: Lint
         run: npm run lint
 
-      - name: Validate Prisma
-        run: npx prisma generate && npx prisma validate
+      - name: Create test database
+        run: npx prisma migrate deploy
 
-      - name: Build application
+      - name: Unit and database tests
+        run: npm test
+
+      - name: Build
         run: npm run build
+
+      - name: Smoke test the built server
+        run: npm run test:smoke
+
+  docker:
+    name: Production image builds
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      # Render builds this same Dockerfile, so check it builds before deploy.
+      - name: Build the Docker image
+        run: docker build --tag corkcount:ci .

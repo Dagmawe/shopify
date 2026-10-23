@@ -1,34 +1,9 @@
-<!--
-  ☝️How to write a good PR title:
-  - Prefix it with [Feature] (if applicable)
-  - Start with a verb, for example: Add, Delete, Improve, Fix…
-  - Give as much context as necessary and as little as possible
-  - Prefix it with [WIP] while it’s a work in progress
--->
+### What changed and why
 
-### WHY are these changes introduced?
+<!-- One or two sentences. Screenshots help for anything merchants see. -->
 
-Fixes #0000 <!-- link to issue if one exists -->
+### How it was tested
 
-<!--
-  Context about the problem that’s being addressed.
--->
-
-### WHAT is this pull request doing?
-
-<!--
-  Summary of the changes committed.
-  Before / after screenshots appreciated for UI changes.
--->
-
-### Test this PR
-
-```bash
-shopify app init --template=https://github.com/Shopify/shopify-app-template-react-router#<your-branch-name>
-```
-
-### Checklist
-
-- [ ] I have made changes to the `README.md` file and other related documentation, if applicable
-- [ ] I have added an entry to `CHANGELOG.md`
-- [ ] I'm aware I need to create a new release when this PR is merged
+- [ ] CI passes (type check, lint, tests, build, smoke test, Docker image)
+- [ ] Tried on the dev store, if it changes something merchants see
+- [ ] Added or updated tests for new behaviour
