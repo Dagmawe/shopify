@@ -188,6 +188,13 @@ try {
     });
   }
 
+  await check("webhook app/scopes_update accepts Shopify's signature, even without a scope list", async () => {
+    const ok = await webhook("app/scopes_update", { id: 1, current: ["read_products"], previous: [] });
+    assert.equal(ok.status, 200);
+    const odd = await webhook("app/scopes_update", { id: 1 });
+    assert.equal(odd.status, 200);
+  });
+
   await check("webhook customers/data_request accepts Shopify's signature", async () => {
     const res = await webhook("customers/data_request", {
       shop_domain: SHOP,

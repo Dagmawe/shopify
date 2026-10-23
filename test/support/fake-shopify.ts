@@ -11,6 +11,8 @@ export interface FakeShopifyOptions {
   stock?: Record<string, Record<string, number>>;
   subscriptions?: Array<{ name: string; status: string }>;
   appHandle?: string;
+  // Items that exist but whose stock Shopify doesn't track.
+  untracked?: string[];
 }
 
 export interface RecordedAdjustment {
@@ -25,6 +27,7 @@ export class FakeShopify implements AdminGraphql {
   stock: Record<string, Record<string, number>>;
   subscriptions: Array<{ name: string; status: string }>;
   appHandle: string;
+  untracked: Set<string>;
   adjustments: RecordedAdjustment[] = [];
   attemptedKeys: string[] = [];
   activations: Array<{ inventoryItemId: string; locationId: string }> = [];
@@ -41,6 +44,7 @@ export class FakeShopify implements AdminGraphql {
     this.stock = structuredClone(options.stock ?? {});
     this.subscriptions = options.subscriptions ?? [];
     this.appHandle = options.appHandle ?? "corkcount";
+    this.untracked = new Set(options.untracked ?? []);
   }
 
   available(itemId: string, locationId: string): number {
@@ -69,6 +73,7 @@ export class FakeShopify implements AdminGraphql {
               this.stock[id]
                 ? {
                     id,
+                    tracked: !this.untracked.has(id),
                     inventoryLevels: {
                       nodes: Object.values(this.stock[id]).map((q) => ({
                         quantities: [{ quantity: q }],

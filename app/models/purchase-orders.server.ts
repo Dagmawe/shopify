@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import db from "../db.server";
 import { lineCost, lineOrderedUnits } from "../lib/units";
 
@@ -12,6 +13,26 @@ export async function nextPoNumber(shop: string): Promise<number> {
     select: { number: true },
   });
   return (last?.number ?? 1000) + 1;
+}
+
+// Creates an order with the store's next number. If two orders are created
+// at the same moment and pick the same number, the database refuses the
+// second (numbers are unique per store), so it simply takes the next one.
+export async function createPurchaseOrder(
+  shop: string,
+  data: Omit<Prisma.PurchaseOrderUncheckedCreateInput, "shop" | "number">,
+) {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await db.purchaseOrder.create({
+        data: { ...data, shop, number: await nextPoNumber(shop) },
+      });
+    } catch (err) {
+      const duplicate =
+        typeof err === "object" && err !== null && (err as { code?: string }).code === "P2002";
+      if (!duplicate || attempt >= 9) throw err;
+    }
+  }
 }
 
 // Bottles already on order (ordered but not yet received), per variant.

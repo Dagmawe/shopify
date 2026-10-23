@@ -74,6 +74,18 @@ describe("getReorderRows", () => {
     assert.deepEqual(shopify.calls, [], "no need to ask Shopify");
   });
 
+  it("skips products that were deleted in Shopify", async () => {
+    await makeSetting(SHOP, 1, { reorderPoint: 30, parLevel: 36 });
+    const shopify = new FakeShopify({ stock: {} }); // Shopify no longer has item 1
+    assert.deepEqual(await getReorderRows(shopify, SHOP), []);
+  });
+
+  it("skips products whose stock Shopify doesn't track", async () => {
+    await makeSetting(SHOP, 1, { reorderPoint: 30, parLevel: 36 });
+    const shopify = new FakeShopify({ stock: { [item(1)]: { [MAIN]: 0 } }, untracked: [item(1)] });
+    assert.deepEqual(await getReorderRows(shopify, SHOP), []);
+  });
+
   it("never shows another store's products", async () => {
     await makeSetting(OTHER, 1, { reorderPoint: 30, parLevel: 36 });
     const shopify = new FakeShopify({ stock: { [item(1)]: { [MAIN]: 0 } } });

@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useAppBridge } from "@shopify/app-bridge-react";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import db from "../db.server";
-import { floatField, intField, requireApp, textField } from "../lib/context.server";
+import { intField, moneyField, requireApp, textField } from "../lib/context.server";
 import { searchVariants } from "../lib/shopify-data.server";
 import { formatUnits } from "../lib/units";
 
@@ -42,7 +42,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 export const action = async ({ request }: ActionFunctionArgs) => {
   const { shop } = await requireApp(request);
   const form = await request.formData();
-  const count = intField(form, "rowCount", 0);
+  // The page shows at most 50 products at a time.
+  const count = Math.max(0, Math.min(50, intField(form, "rowCount", 0)));
   const distributorIds = new Set(
     (await db.distributor.findMany({ where: { shop }, select: { id: true } })).map((d) => d.id),
   );
@@ -60,7 +61,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       title,
       sku: textField(form, `sku_${i}`),
       caseSize: Math.max(1, intField(form, `caseSize_${i}`, 12)),
-      costPerCase: floatField(form, `costPerCase_${i}`),
+      costPerCase: moneyField(form, `costPerCase_${i}`),
       reorderPoint: Math.max(0, intField(form, `reorderPoint_${i}`, 0)),
       parLevel: Math.max(0, intField(form, `parLevel_${i}`, 0)),
       distributorId: distributorIds.has(distributorRaw) ? distributorRaw : null,
@@ -136,6 +137,12 @@ export default function CaseSettings() {
                         <s-stack direction="block">
                           <s-text>{r.title}</s-text>
                           {r.sku && <s-text color="subdued">{r.sku}</s-text>}
+                          {!r.tracked && (
+                            <s-text tone="warning">
+                              Shopify isn&apos;t tracking stock for this product. Turn on
+                              &quot;Track quantity&quot; in Shopify to reorder and receive it.
+                            </s-text>
+                          )}
                         </s-stack>
                       </s-table-cell>
                       <s-table-cell>{formatUnits(r.available, r.caseSize)}</s-table-cell>

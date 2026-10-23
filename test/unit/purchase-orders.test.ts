@@ -1,6 +1,7 @@
 import { beforeEach, describe, it } from "node:test";
 import assert from "node:assert/strict";
 import {
+  createPurchaseOrder,
   draftsByVariant,
   incomingByVariant,
   nextPoNumber,
@@ -34,6 +35,18 @@ describe("nextPoNumber", () => {
     const d = await makeDistributor(OTHER);
     await db.purchaseOrder.create({ data: { shop: OTHER, number: 1500, distributorId: d.id } });
     assert.equal(await nextPoNumber(SHOP), 1001);
+  });
+});
+
+describe("createPurchaseOrder", () => {
+  it("gives orders created at the same moment different numbers", async () => {
+    const d = await makeDistributor(SHOP);
+    const orders = await Promise.all(
+      Array.from({ length: 5 }, () => createPurchaseOrder(SHOP, { distributorId: d.id })),
+    );
+    const numbers = orders.map((o) => o.number).sort();
+    assert.deepEqual(numbers, [1001, 1002, 1003, 1004, 1005]);
+    assert.ok(orders.every((o) => o.shop === SHOP && o.status === "DRAFT"));
   });
 });
 

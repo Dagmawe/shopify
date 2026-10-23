@@ -33,13 +33,15 @@ export async function getReorderRows(admin: AdminGraphql, shop: string): Promise
   if (!settings.length) return [];
 
   const [available, incoming, drafts] = await Promise.all([
-    getAvailable(admin, settings.map((s) => s.inventoryItemId)),
+    getAvailable(admin, settings.map((s) => s.inventoryItemId), null, { trackedOnly: true }),
     incomingByVariant(shop),
     draftsByVariant(shop),
   ]);
 
   const rows: ReorderRow[] = [];
   for (const s of settings) {
+    // Deleted in Shopify, or Shopify isn't counting its stock: nothing to reorder.
+    if (!available.has(s.inventoryItemId)) continue;
     const onHand = available.get(s.inventoryItemId) ?? 0;
     const onOrder = incoming.get(s.variantId) ?? 0;
     const cases = suggestedCases({

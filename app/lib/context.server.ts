@@ -48,26 +48,8 @@ export function clearPlanCache(shop: string) {
   planCache.delete(shop);
 }
 
-export function intField(form: FormData, key: string, fallback = 0): number {
-  const raw = form.get(key);
-  if (raw == null || raw === "") return fallback;
-  const n = Number.parseInt(String(raw), 10);
-  return Number.isFinite(n) ? n : fallback;
-}
-
-export function floatField(form: FormData, key: string): number | null {
-  const raw = form.get(key);
-  if (raw == null || raw === "") return null;
-  const n = Number.parseFloat(String(raw));
-  return Number.isFinite(n) ? n : null;
-}
-
-export function textField(form: FormData, key: string): string | null {
-  const raw = form.get(key);
-  if (raw == null) return null;
-  const s = String(raw).trim();
-  return s ? s : null;
-}
+// Form helpers live in ./form (no server imports, so they can be tested).
+export { dateField, floatField, intField, moneyField, textField } from "./form";
 
 // Logs why a request was stopped (a redirect, a sign-in retry, or an error),
 // so the terminal shows the reason instead of a blank screen.

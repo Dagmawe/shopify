@@ -3,7 +3,7 @@ import type { ActionFunctionArgs, HeadersFunction, LoaderFunctionArgs } from "re
 import { Form, redirect, useActionData, useLoaderData, useNavigation } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import db from "../db.server";
-import { floatField, intField, requireApp } from "../lib/context.server";
+import { intField, moneyField, requireApp } from "../lib/context.server";
 import { formatCasesAndBottles, formatMoney, formatUnits, lineCost, lineOrderedUnits, toUnits } from "../lib/units";
 import { poTotals } from "../models/purchase-orders.server";
 import { receiveDelivery, remainingUnits } from "../models/receiving.server";
@@ -148,7 +148,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       for (const line of order.lines) {
         const cases = Math.max(0, intField(form, `cases_${line.id}`, line.casesOrdered));
         const loose = Math.max(0, intField(form, `loose_${line.id}`, line.looseOrdered));
-        const cost = floatField(form, `cost_${line.id}`);
+        const cost = moneyField(form, `cost_${line.id}`);
         if (cases + loose === 0) {
           await db.purchaseOrderLine.delete({ where: { id: line.id } });
         } else {

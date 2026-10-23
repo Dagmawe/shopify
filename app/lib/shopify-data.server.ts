@@ -54,6 +54,8 @@ export interface VariantRow {
   title: string;
   sku: string | null;
   available: number;
+  // False when Shopify isn't counting this product's stock.
+  tracked: boolean;
 }
 
 interface VariantNode {
@@ -99,6 +101,7 @@ export async function searchVariants(
       title: n.displayName.replace(/ - Default Title$/, ""),
       sku: n.sku || null,
       available: n.inventoryQuantity ?? 0,
+      tracked: n.inventoryItem.tracked,
     })),
     endCursor: data.productVariants.pageInfo.endCursor,
     hasNextPage: data.productVariants.pageInfo.hasNextPage,
@@ -111,16 +114,23 @@ export async function searchVariants(
 
 // Returns available quantity per inventory item. With a location, only that
 // location's stock is counted; without one, stock is summed across locations.
+// Items Shopify no longer has (deleted products) are left out of the result.
+// With trackedOnly, so are items whose stock Shopify doesn't track.
 export async function getAvailable(
   admin: AdminGraphql,
   inventoryItemIds: string[],
   locationId?: string | null,
+  options: { trackedOnly?: boolean } = {},
 ): Promise<Map<string, number>> {
   const result = new Map<string, number>();
   const unique = Array.from(new Set(inventoryItemIds));
+  // Shopify refuses queries that could cost more than 1,000 points. One
+  // location's level costs little, so 100 items fit; levels across every
+  // location cost about 27 points per item, so 25 items stay near 700.
+  const batchSize = locationId ? 100 : 25;
 
-  for (let i = 0; i < unique.length; i += 100) {
-    const batch = unique.slice(i, i + 100);
+  for (let i = 0; i < unique.length; i += batchSize) {
+    const batch = unique.slice(i, i + batchSize);
     if (locationId) {
       const data = await gql<{
         nodes: Array<{
@@ -150,6 +160,7 @@ export async function getAvailable(
       const data = await gql<{
         nodes: Array<{
           id: string;
+          tracked: boolean;
           inventoryLevels: { nodes: Array<{ quantities: Array<{ quantity: number }> }> };
         } | null>;
       }>(
@@ -159,7 +170,8 @@ export async function getAvailable(
           nodes(ids: $ids) {
             ... on InventoryItem {
               id
-              inventoryLevels(first: 50) {
+              tracked
+              inventoryLevels(first: 25) {
                 nodes { quantities(names: ["available"]) { quantity } }
               }
             }
@@ -169,6 +181,7 @@ export async function getAvailable(
       );
       for (const node of data.nodes) {
         if (!node?.id) continue;
+        if (options.trackedOnly && !node.tracked) continue;
         const total = node.inventoryLevels.nodes.reduce(
           (sum, level) => sum + (level.quantities[0]?.quantity ?? 0),
           0,

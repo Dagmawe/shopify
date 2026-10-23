@@ -40,14 +40,28 @@ describe("getAvailable", () => {
     assert.equal(shopify.calls.length, 1);
   });
 
-  it("batches large lists into groups of 100", async () => {
+  it("batches large lists to stay under Shopify's query cost limit", async () => {
     const many: Record<string, Record<string, number>> = {};
     const ids = Array.from({ length: 250 }, (_, i) => `gid://shopify/InventoryItem/${i + 1}`);
     for (const id of ids) many[id] = { [MAIN]: 1 };
     const shopify = new FakeShopify({ stock: many });
     const levels = await getAvailable(shopify, ids);
     assert.equal(levels.size, 250);
-    assert.equal(shopify.calls.length, 3);
+    assert.equal(shopify.calls.length, 10, "25 items per request across all locations");
+
+    const atOne = new FakeShopify({ stock: many });
+    await getAvailable(atOne, ids, MAIN);
+    assert.equal(atOne.calls.length, 3, "100 items per request at one location");
+  });
+
+  it("leaves out deleted items, and untracked items when asked", async () => {
+    const shopify = new FakeShopify({ stock, untracked: [WHITE] });
+    const gone = "gid://shopify/InventoryItem/999";
+    const all = await getAvailable(shopify, [RED, WHITE, gone]);
+    assert.equal(all.has(gone), false);
+    assert.equal(all.has(WHITE), true);
+    const tracked = await getAvailable(shopify, [RED, WHITE, gone], null, { trackedOnly: true });
+    assert.deepEqual([...tracked.keys()], [RED]);
   });
 });
 

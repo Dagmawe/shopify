@@ -7,6 +7,8 @@ import { formatCasesAndBottles, formatMoney } from "../lib/units";
 import { poTotals } from "../models/purchase-orders.server";
 import { STATUS_LABEL, STATUS_TONE } from "../lib/status";
 
+const LIST_LIMIT = 200;
+
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { shop } = await requireApp(request);
   const url = new URL(request.url);
@@ -18,7 +20,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       ...(show === "open" ? { status: { in: ["DRAFT", "ORDERED", "PARTIAL"] } } : {}),
     },
     orderBy: { number: "desc" },
-    take: 200,
+    take: LIST_LIMIT,
     include: { distributor: { select: { name: true } }, lines: true },
   });
 
@@ -27,6 +29,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   return {
     show,
     anyOrders,
+    truncated: orders.length === LIST_LIMIT,
     orders: orders.map((o) => {
       const totals = poTotals(o.lines);
       return {
@@ -44,7 +47,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export default function PurchaseOrders() {
-  const { orders, show, anyOrders } = useLoaderData<typeof loader>();
+  const { orders, show, anyOrders, truncated } = useLoaderData<typeof loader>();
 
   return (
     <s-page heading="Purchase orders">
@@ -105,6 +108,11 @@ export default function PurchaseOrders() {
               ))}
             </s-table-body>
           </s-table>
+        )}
+        {truncated && (
+          <s-paragraph>
+            <s-text color="subdued">Showing your {LIST_LIMIT} most recent orders.</s-text>
+          </s-paragraph>
         )}
       </s-section>
     </s-page>

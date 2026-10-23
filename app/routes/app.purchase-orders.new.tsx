@@ -2,10 +2,10 @@ import type { ActionFunctionArgs, HeadersFunction, LoaderFunctionArgs } from "re
 import { Form, redirect, useActionData, useLoaderData, useNavigation } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import db from "../db.server";
-import { intField, requireApp, textField } from "../lib/context.server";
+import { dateField, intField, requireApp, textField } from "../lib/context.server";
 import { getLocations } from "../lib/shopify-data.server";
 import { getAppHandle, planSelectionUrl } from "../lib/plan.server";
-import { nextPoNumber } from "../models/purchase-orders.server";
+import { createPurchaseOrder } from "../models/purchase-orders.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { admin, shop, plan } = await requireApp(request);
@@ -37,17 +37,15 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const location = allowed.find((l) => l.id === form.get("locationId")) ?? allowed[0];
   if (!location) return { error: "Your store has no active locations." };
 
-  const expected = textField(form, "expectedAt");
-  const order = await db.purchaseOrder.create({
-    data: {
-      shop,
-      number: await nextPoNumber(shop),
+  const expected = dateField(form, "expectedAt");
+  if (expected === "invalid") return { dateError: "Enter a date like 2026-11-05." };
+
+  const order = await createPurchaseOrder(shop, {
       distributorId: distributor.id,
       locationId: location.id,
       locationName: location.name,
       notes: textField(form, "notes"),
-      expectedAt: expected ? new Date(`${expected}T12:00:00Z`) : null,
-    },
+      expectedAt: expected,
   });
   return redirect(`/app/purchase-orders/${order.id}`);
 };
@@ -114,7 +112,11 @@ export default function NewPurchaseOrder() {
                 See plans
               </s-link>
             )}
-            <s-date-field label="Expected delivery" name="expectedAt" />
+            <s-date-field
+              label="Expected delivery"
+              name="expectedAt"
+              {...(result && "dateError" in result ? { error: result.dateError } : {})}
+            />
             <s-text-area label="Notes for the distributor" name="notes" />
             <s-button type="submit" variant="primary" {...(saving ? { loading: true } : {})}>
               Create draft

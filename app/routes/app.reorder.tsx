@@ -6,7 +6,7 @@ import { requireApp } from "../lib/context.server";
 import { getAppHandle, planSelectionUrl } from "../lib/plan.server";
 import { getAvailable, getLocations } from "../lib/shopify-data.server";
 import { formatMoney, formatUnits } from "../lib/units";
-import { nextPoNumber } from "../models/purchase-orders.server";
+import { createPurchaseOrder } from "../models/purchase-orders.server";
 import { getReorderRows, type ReorderRow } from "../models/reorder.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -74,10 +74,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       locations,
       list.map((r) => r.inventoryItemId),
     );
-    const order = await db.purchaseOrder.create({
-      data: {
-        shop,
-        number: await nextPoNumber(shop),
+    const order = await createPurchaseOrder(shop, {
         distributorId,
         locationId: location?.id ?? null,
         locationName: location?.name ?? null,
@@ -93,7 +90,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             costPerCase: r.costPerCase,
           })),
         },
-      },
     });
     created++;
     lastId = order.id;
