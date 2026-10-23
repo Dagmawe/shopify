@@ -18,13 +18,20 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   return { apiKey: process.env.SHOPIFY_API_KEY || "" };
 };
 
+const HOME_LINK = { rel: "home" };
+
 export default function App() {
   const { apiKey } = useLoaderData<typeof loader>();
 
   return (
     <AppProvider apiKey={apiKey}>
       <s-app-nav>
-        <s-link href="/app" rel="home">Home</s-link>
+        {/* rel="home" makes the app name the home link, so "Home" isn't listed
+            twice (Built for Shopify 4.1.4). The installed type definitions
+            don't include rel yet, hence the spread. */}
+        <s-link href="/app" {...(HOME_LINK as object)}>
+          Home
+        </s-link>
         <s-link href="/app/reorder">Reorder</s-link>
         <s-link href="/app/purchase-orders">Purchase orders</s-link>
         <s-link href="/app/products">Case settings</s-link>
