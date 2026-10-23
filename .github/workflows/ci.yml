@@ -45,7 +45,11 @@ jobs:
       # every problem. The job still fails if any step fails.
       - name: Lint
         # "compact" output lets GitHub show each problem on the file and line.
-        run: npm run lint -- --format compact
+        run: |
+          if npm run lint -- --format compact > lint.txt 2>&1; then exit 0; fi
+          cat lint.txt
+          echo "::error title=Lint output::$(tail -c 4000 lint.txt | sed ':a;N;$!ba;s/%/%25/g;s/\n/%0A/g')"
+          exit 1
 
       - name: Create test database
         if: ${{ !cancelled() }}
