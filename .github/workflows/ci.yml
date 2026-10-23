@@ -42,7 +42,8 @@ jobs:
         run: npm run typecheck
 
       - name: Lint
-        run: npm run lint
+        # "compact" output lets GitHub show each problem on the file and line.
+        run: npm run lint -- --format compact
 
       - name: Create test database
         run: npx prisma migrate deploy
