@@ -168,7 +168,7 @@ try {
     const html = await res.text();
     assert.match(html, /Privacy policy/);
     assert.match(html, /48 hours/);
-    assert.match(html, /corkcountsupport@gmail\.com/);
+    assert.match(html, /legesse\.dagmawe@gmail\.com/);
   });
 
   await check("login page has no 'enter your store' field (App Store rule 2.3.1)", async () => {
