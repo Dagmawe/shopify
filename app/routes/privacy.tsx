@@ -7,8 +7,12 @@ import styles from "../styles/site.module.css";
 // Keep this page in step with what the app actually stores. Data lives in
 // prisma/schema.prisma; Shopify access is set in shopify.app*.toml.
 
+// The address merchants see for support. CORKCOUNT_SUPPORT_EMAIL can
+// override it on the server without a code change.
+const SUPPORT_EMAIL = "corkcountsupport@gmail.com";
+
 export const loader = () => ({
-  supportEmail: process.env.CORKCOUNT_SUPPORT_EMAIL || null,
+  supportEmail: process.env.CORKCOUNT_SUPPORT_EMAIL || SUPPORT_EMAIL,
 });
 
 export const links: LinksFunction = () => siteFontLinks;
