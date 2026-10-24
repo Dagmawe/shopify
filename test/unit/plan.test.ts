@@ -2,6 +2,7 @@ import { afterEach, describe, it } from "node:test";
 import assert from "node:assert/strict";
 import {
   billingBypassed,
+  cameFromPlanChange,
   getActivePlan,
   planSelectionRedirectPath,
   planSelectionUrl,
@@ -99,6 +100,17 @@ describe("getActivePlan", () => {
     const plan = await getActivePlan(shopify);
     assert.equal(plan?.name, "Pro");
     assert.deepEqual(shopify.calls, [], "no call to Shopify needed");
+  });
+});
+
+describe("cameFromPlanChange", () => {
+  it("spots the return trip from Shopify's plan page", () => {
+    assert.equal(cameFromPlanChange("https://x.test/app?plan_handle=pro&charge_id=123"), true);
+    assert.equal(cameFromPlanChange("https://x.test/app?charge_id=123"), true);
+  });
+  it("is false on ordinary visits", () => {
+    assert.equal(cameFromPlanChange("https://x.test/app"), false);
+    assert.equal(cameFromPlanChange("https://x.test/app/reorder?host=abc&shop=s.myshopify.com"), false);
   });
 });
 

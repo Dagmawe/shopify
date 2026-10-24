@@ -88,6 +88,13 @@ export async function getAppHandle(admin: AdminGraphql): Promise<string> {
   return handle;
 }
 
+// Shopify sends merchants back with ?charge_id=... after they pick or change
+// a plan. On that visit the plan must be read fresh, not from the cache.
+export function cameFromPlanChange(requestUrl: string): boolean {
+  const params = new URL(requestUrl).searchParams;
+  return params.has("charge_id") || params.has("plan_handle");
+}
+
 // Shopify's hosted plan-selection page for managed pricing, in the form the
 // app's redirect helper expects (it opens the page in the top admin window).
 export function planSelectionRedirectPath(appHandle: string): string {

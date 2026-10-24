@@ -1,6 +1,7 @@
 import { authenticate } from "../shopify.server";
 import { getShopCurrency, type AdminGraphql } from "./shopify-data.server";
 import {
+  cameFromPlanChange,
   getActivePlan,
   getAppHandle,
   planSelectionRedirectPath,
@@ -29,7 +30,8 @@ async function requireAppInner(request: Request) {
   const shop = context.session.shop;
 
   let plan: PlanFeatures | null = null;
-  const cached = planCache.get(shop);
+  // Right after a plan change, ask Shopify instead of trusting the cache.
+  const cached = cameFromPlanChange(request.url) ? undefined : planCache.get(shop);
   if (cached && cached.expires > Date.now()) {
     plan = cached.plan;
   } else {
