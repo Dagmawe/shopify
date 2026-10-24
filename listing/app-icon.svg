@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200" viewBox="0 0 1200 1200">
+  <defs>
+    <radialGradient id="cork" cx="38%" cy="32%" r="75%">
+      <stop offset="0" stop-color="#e2c194"/>
+      <stop offset="0.55" stop-color="#c49a6c"/>
+      <stop offset="1" stop-color="#93693c"/>
+    </radialGradient>
+  </defs>
+  <!-- bottle-glass green background (Shopify rounds the corners itself) -->
+  <rect width="1200" height="1200" fill="#1e3b30"/>
+  <!-- the case, seen from above -->
+  <rect x="230" y="230" width="740" height="740" rx="56" fill="#d9c7a7"/>
+  <rect x="230" y="230" width="740" height="740" rx="56" fill="none" stroke="#c4ad86" stroke-width="10"/>
+  <!-- cardboard dividers -->
+  <rect x="595" y="262" width="10" height="676" fill="#c4ad86"/>
+  <rect x="262" y="595" width="676" height="10" fill="#c4ad86"/>
+  <!-- three bottles, corks up -->
+  <g>
+    <circle cx="420" cy="420" r="128" fill="#2c4a3d"/>
+    <circle cx="420" cy="420" r="104" fill="url(#cork)"/>
+    <circle cx="420" cy="420" r="62" fill="none" stroke="#9c7445" stroke-width="8" opacity="0.7"/>
+  </g>
+  <g>
+    <circle cx="780" cy="420" r="128" fill="#2c4a3d"/>
+    <circle cx="780" cy="420" r="104" fill="url(#cork)"/>
+    <circle cx="780" cy="420" r="62" fill="none" stroke="#9c7445" stroke-width="8" opacity="0.7"/>
+  </g>
+  <g>
+    <circle cx="420" cy="780" r="128" fill="#2c4a3d"/>
+    <circle cx="420" cy="780" r="104" fill="url(#cork)"/>
+    <circle cx="420" cy="780" r="62" fill="none" stroke="#9c7445" stroke-width="8" opacity="0.7"/>
+  </g>
+  <!-- one bottle sold: an empty slot -->
+  <circle cx="780" cy="780" r="112" fill="none" stroke="#b39a72" stroke-width="12" stroke-dasharray="34 26"/>
+</svg>
