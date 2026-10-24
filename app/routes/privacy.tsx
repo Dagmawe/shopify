@@ -9,7 +9,7 @@ import styles from "../styles/site.module.css";
 
 // The address merchants see for support. CORKCOUNT_SUPPORT_EMAIL can
 // override it on the server without a code change.
-const SUPPORT_EMAIL = "legesse.dagmawe@gmail.com";
+const SUPPORT_EMAIL = "corkcount1.support@gmail.com";
 
 export const loader = () => ({
   supportEmail: process.env.CORKCOUNT_SUPPORT_EMAIL || SUPPORT_EMAIL,
